@@ -15,6 +15,7 @@ const RARE_OBSTACLES = [
     { type: "rock", obstacleId: "open-manhole", jumpRule: "high", widthScale: 0.6, height: 28, speed: 2.3, moving: false, minLevel: 1, weight: 0.9 },
     { type: "spaniel", obstacleId: "leashed-dog-lunge", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.7, moving: true, minLevel: 2, weight: 0.8 },
     { type: "black-spaniel", obstacleId: "black-spaniel", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.75, moving: true, minLevel: 2, weight: 0.36 },
+    { type: "ski-school-instructor", obstacleId: "ski-school-snake", jumpRule: "low", widthScale: 0.56, height: 30, speed: 1.5, moving: true, minLevel: 3, weight: 0.42 },
     { type: "ice-crevasse", obstacleId: "ice-crevasse", jumpRule: "high", widthScale: 1.55, height: 24, speed: 2.25, moving: false, minLevel: 2, weight: 0.42 },
     { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false, minLevel: 2, weight: 0.72 },
     { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false, minLevel: 2, weight: 0.78 },
@@ -96,11 +97,11 @@ export class SpanielSmashGame {
     static respawnImmortalMs = 2200;
     static levelUpBannerDurationMs = 1800;
     static levelTransitionBoostDurationMs = 3800;
-    static levelTransitionSpawnIntervalMs = 300;
-    static levelTransitionSpawnFloorMs = 210;
+    static levelTransitionSpawnIntervalMs = 230;
+    static levelTransitionSpawnFloorMs = 150;
     static levelOneBaseSpawnIntervalMs = 540;
-    static spawnIntervalLevelStepMs = 32;
-    static minSpawnIntervalMs = 240;
+    static spawnIntervalLevelStepMs = 56;
+    static minSpawnIntervalMs = 150;
     static levelOneStandardSpanielChance = 0.56;
     static levelSpeedStepMultiplier = 0.22;
     static levelTransitionScrollMultiplier = 1.2;
@@ -118,6 +119,17 @@ export class SpanielSmashGame {
     static iceJumpCooldownMs = 360;
     static puddleScrollSpeedMultiplier = 0.72;
     static iceScrollSpeedMultiplier = 1.35;
+    static skiSchoolObstacleId = "ski-school-snake";
+    static skiSchoolBaseChildren = 3;
+    static skiSchoolMaxChildren = 16;
+    static skiSchoolInstructorWidthScale = 0.56;
+    static skiSchoolChildWidthScale = 0.5;
+    static skiSchoolInstructorHeight = 30;
+    static skiSchoolChildHeight = 28;
+    static skiSchoolSegmentSpacingPx = 16;
+    static skiSchoolWavePeriodMs = 1080;
+    static skiSchoolWaveOffsetMs = 170;
+    static skiSchoolSpeedVariance = 0.16;
     constructor(width, height, rng = Math.random, laneCount = 20) {
         this.width = width;
         this.height = height;
@@ -257,6 +269,10 @@ export class SpanielSmashGame {
     }
     spawnTieredObstacle(tier, spawnLane, spawnX, movingDirection, movingSpawnY) {
         const template = this.pickTemplateForTier(tier);
+        if (template.type === "ski-school-instructor") {
+            this.spawnSkiSchoolSnake(spawnLane, movingDirection, tier, this.skiSchoolChildrenForLevel());
+            return;
+        }
         this.entities.push(this.makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY));
     }
     templatesForTier(tier) {
@@ -332,6 +348,69 @@ export class SpanielSmashGame {
             return { kind: "downdraft", pushDirection: movingDirection, pushCooldownMs: 0 };
         }
         return undefined;
+    }
+    skiSchoolChildrenForLevel(level = this.speedLevel) {
+        const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 2;
+        return Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, scaled));
+    }
+    skiSchoolLaneSpanForLevel(level = this.speedLevel) {
+        return level >= 6 ? 2 : 1;
+    }
+    clampSkiSchoolAnchorLane(lane, laneSpan) {
+        const minAnchor = this.minPlayableLane() + laneSpan;
+        const maxAnchor = this.maxPlayableLane() - laneSpan;
+        if (minAnchor > maxAnchor) {
+            return Math.max(this.minPlayableLane(), Math.min(this.maxPlayableLane(), lane));
+        }
+        return Math.max(minAnchor, Math.min(maxAnchor, lane));
+    }
+    computeSkiSchoolLane(anchorLane, laneSpan, phaseMs, wavePeriodMs) {
+        const normalizedPhaseMs = ((phaseMs % wavePeriodMs) + wavePeriodMs) % wavePeriodMs;
+        const theta = (normalizedPhaseMs / wavePeriodMs) * Math.PI * 2;
+        const lane = Math.round(anchorLane + Math.sin(theta) * laneSpan);
+        return Math.max(this.minPlayableLane(), Math.min(this.maxPlayableLane(), lane));
+    }
+    spawnSkiSchoolSnake(spawnLane, movingDirection, tier, childrenCount, spawnYOverride) {
+        const laneSpan = this.skiSchoolLaneSpanForLevel();
+        const anchorLane = this.clampSkiSchoolAnchorLane(spawnLane, laneSpan);
+        const childTotal = Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)));
+        const baseY = typeof spawnYOverride === "number"
+            ? spawnYOverride
+            : movingDirection === 1 ? -30 : this.height + 30;
+        const waveSeedMs = Math.floor(this.rng() * SpanielSmashGame.skiSchoolWavePeriodMs);
+        const baseSpeed = 1.36 + this.rng() * SpanielSmashGame.skiSchoolSpeedVariance;
+        const totalRiders = childTotal + 1;
+        for (let riderIndex = 0; riderIndex < totalRiders; riderIndex += 1) {
+            const isInstructor = riderIndex === 0;
+            const phaseOffsetMs = riderIndex * SpanielSmashGame.skiSchoolWaveOffsetMs;
+            const lane = this.computeSkiSchoolLane(anchorLane, laneSpan, waveSeedMs + phaseOffsetMs, SpanielSmashGame.skiSchoolWavePeriodMs);
+            const verticalOffset = riderIndex * SpanielSmashGame.skiSchoolSegmentSpacingPx;
+            this.entities.push({
+                id: this.nextEntityId++,
+                type: isInstructor ? "ski-school-instructor" : "ski-school-child",
+                obstacleId: SpanielSmashGame.skiSchoolObstacleId,
+                obstacleTier: tier,
+                jumpRule: "low",
+                behaviorState: {
+                    kind: "skiSchoolSnake",
+                    anchorLane,
+                    laneSpan,
+                    phaseMs: waveSeedMs,
+                    phaseOffsetMs,
+                    wavePeriodMs: SpanielSmashGame.skiSchoolWavePeriodMs,
+                    paletteIndex: isInstructor ? 0 : riderIndex - 1
+                },
+                x: this.laneX(lane),
+                y: baseY + verticalOffset,
+                width: this.laneWidth * (isInstructor ? SpanielSmashGame.skiSchoolInstructorWidthScale : SpanielSmashGame.skiSchoolChildWidthScale),
+                height: isInstructor ? SpanielSmashGame.skiSchoolInstructorHeight : SpanielSmashGame.skiSchoolChildHeight,
+                speed: baseSpeed,
+                lane,
+                laneSwitchCooldownMs: 0,
+                direction: movingDirection,
+                crashAnimationMs: 0
+            });
+        }
     }
     spawnAndyBoss() {
         const spawnLane = this.minPlayableLane() + Math.floor(this.rng() * (this.maxPlayableLane() - this.minPlayableLane() + 1));
@@ -456,6 +535,12 @@ export class SpanielSmashGame {
         }
         if (behavior.kind === "downdraft") {
             behavior.pushCooldownMs = Math.max(0, behavior.pushCooldownMs - deltaMs);
+            return;
+        }
+        if (behavior.kind === "skiSchoolSnake") {
+            behavior.phaseMs = (behavior.phaseMs + deltaMs) % behavior.wavePeriodMs;
+            const lane = this.computeSkiSchoolLane(behavior.anchorLane, behavior.laneSpan, behavior.phaseMs + behavior.phaseOffsetMs, behavior.wavePeriodMs);
+            entity.lane = lane;
             return;
         }
         if (behavior.kind === "andyBoss") {
@@ -684,6 +769,9 @@ export class SpanielSmashGame {
                 if (first.type === "andy" || second.type === "andy" || first.type === "poo-bag" || second.type === "poo-bag") {
                     continue;
                 }
+                if (this.isSameSkiSchoolGroup(first, second)) {
+                    continue;
+                }
                 if (!intersects(first, second)) {
                     continue;
                 }
@@ -718,10 +806,22 @@ export class SpanielSmashGame {
     }
     isMovingObstacle(entity) {
         return entity.type === "skier"
+            || entity.type === "ski-school-instructor"
+            || entity.type === "ski-school-child"
             || entity.type === "naked-skier"
             || entity.type === "spaniel"
             || entity.type === "black-spaniel"
             || entity.type === "helicopter-downdraft";
+    }
+    isSkiSchoolEntity(entity) {
+        return entity.type === "ski-school-instructor" || entity.type === "ski-school-child";
+    }
+    isSameSkiSchoolGroup(first, second) {
+        if (!this.isSkiSchoolEntity(first) || !this.isSkiSchoolEntity(second)) {
+            return false;
+        }
+        return first.obstacleId === SpanielSmashGame.skiSchoolObstacleId
+            && second.obstacleId === SpanielSmashGame.skiSchoolObstacleId;
     }
     isLethalForMovingObstacleCollision(entity) {
         if (entity.type === "bloodstain"
@@ -761,6 +861,16 @@ export class SpanielSmashGame {
         entity.direction ??= 1;
         entity.crashAnimationMs ??= 0;
         this.entities.push(entity);
+    }
+    spawnSkiSchoolDebug(childrenCount) {
+        if (this.gameOver) {
+            return;
+        }
+        const spawnLane = this.playerLane;
+        const childTotal = typeof childrenCount === "number"
+            ? Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)))
+            : this.skiSchoolChildrenForLevel();
+        this.spawnSkiSchoolSnake(spawnLane, 1, "rare", childTotal, 92);
     }
     restart() {
         this.playerLane = this.startingLane();
@@ -975,6 +1085,12 @@ export class PixelRenderer {
             }
             else if (entity.type === "skier")
                 drawSkierSlim(this.ctx, entity.x, entity.y, "#3a86ff", "#ff6b6b");
+            else if (entity.type === "ski-school-instructor")
+                drawSkierSlim(this.ctx, entity.x, entity.y, "#dc2626", "#fde68a");
+            else if (entity.type === "ski-school-child") {
+                const paletteIndex = entity.behaviorState?.kind === "skiSchoolSnake" ? entity.behaviorState.paletteIndex : 0;
+                drawSkiSchoolChild(this.ctx, entity.x, entity.y, paletteIndex);
+            }
             else if (entity.type === "naked-skier")
                 drawNakedSkier(this.ctx, entity.x, entity.y);
             else if (entity.type === "spaniel")
@@ -1346,6 +1462,62 @@ function drawSkierSlim(ctx, x, y, bodyColor, helmetColor, jumpOffset = 0) {
     ctx.fillStyle = "#e5e7eb";
     ctx.fillRect(x + 6 - tipSpread, skiTipY, 1, 1);
     ctx.fillRect(x + 16 + tipSpread, skiTipY, 1, 1);
+}
+const SKI_SCHOOL_CHILD_COLORS = [
+    { body: "#2563eb", helmet: "#bfdbfe" },
+    { body: "#16a34a", helmet: "#dcfce7" },
+    { body: "#7c3aed", helmet: "#ddd6fe" },
+    { body: "#d97706", helmet: "#fde68a" },
+    { body: "#0f766e", helmet: "#99f6e4" }
+];
+function drawSkiSchoolChild(ctx, x, y, paletteIndex) {
+    const palette = SKI_SCHOOL_CHILD_COLORS[((paletteIndex % SKI_SCHOOL_CHILD_COLORS.length) + SKI_SCHOOL_CHILD_COLORS.length) % SKI_SCHOOL_CHILD_COLORS.length];
+    const helmetY = y + 9;
+    const bodyY = y + 14;
+    const legY = y + 20;
+    const poleStartY = bodyY + 1;
+    const skiRows = [0, 1, 1, 2];
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 8, bodyY, 6, 7);
+    ctx.fillStyle = palette.body;
+    ctx.fillRect(x + 9, bodyY + 1, 4, 6);
+    ctx.fillRect(x + 8, bodyY + 2, 1, 2);
+    ctx.fillRect(x + 13, bodyY + 2, 1, 2);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.3)";
+    ctx.fillRect(x + 11, bodyY + 2, 1, 4);
+    ctx.fillStyle = palette.helmet;
+    ctx.fillRect(x + 9, helmetY, 4, 4);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 10, helmetY + 2, 2, 1);
+    ctx.fillRect(x + 9, helmetY + 3, 4, 1);
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(x + 10, helmetY + 1, 1, 1);
+    ctx.fillStyle = "#1f2937";
+    ctx.fillRect(x + 9, legY, 1, 4);
+    ctx.fillRect(x + 12, legY, 1, 4);
+    ctx.fillStyle = "#0b1220";
+    ctx.fillRect(x + 9, legY + 3, 2, 1);
+    ctx.fillRect(x + 12, legY + 3, 2, 1);
+    for (let index = 0; index < 8; index += 1) {
+        const diagonalOffset = Math.floor(index / 4);
+        const rowY = poleStartY + index;
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x + 8 - diagonalOffset, rowY, 1, 1);
+        ctx.fillRect(x + 14 + diagonalOffset, rowY, 1, 1);
+    }
+    const skiStartY = y + 25;
+    for (let index = 0; index < skiRows.length; index += 1) {
+        const spread = skiRows[index] ?? 0;
+        const rowY = skiStartY + index;
+        const leftSkiX = x + 8 - spread;
+        const rightSkiX = x + 12 + spread;
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(leftSkiX, rowY, 3, 1);
+        ctx.fillRect(rightSkiX, rowY, 3, 1);
+        ctx.fillStyle = "#93c5fd";
+        ctx.fillRect(leftSkiX, rowY, 1, 1);
+        ctx.fillRect(rightSkiX, rowY, 1, 1);
+    }
 }
 function drawSkier(ctx, x, y, bodyColor, helmetColor, jumpOffset = 0) {
     const inAir = jumpOffset > 0;

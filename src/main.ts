@@ -231,7 +231,7 @@ class SkiMusic {
   }
 }
 
-const GAME_VERSION = "v1.1.22";
+const GAME_VERSION = "v1.1.26";
 
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
@@ -250,6 +250,8 @@ const muteToggle = document.getElementById("splash-mute-toggle") as HTMLInputEle
 let isPlaying = false;
 let gameOverHandled = false;
 let lastSpanielSmashCount = 0;
+let runStartMs = 0;
+let usedSkiSchoolDebugSpawn = false;
 
 const STORAGE_MUTE_KEY = "spaniel-smash-muted";
 const initialMuted = window.localStorage.getItem(STORAGE_MUTE_KEY) === "true";
@@ -287,6 +289,14 @@ function hideSplash(): void {
 
 window.addEventListener("keydown", (event) => {
   if (!isPlaying || game.snapshot().isGameOver) {
+    return;
+  }
+
+  if ((event.key === "p" || event.key === "P")
+    && !usedSkiSchoolDebugSpawn
+    && performance.now() - runStartMs <= 1000) {
+    game.spawnSkiSchoolDebug(4);
+    usedSkiSchoolDebugSpawn = true;
     return;
   }
 
@@ -403,6 +413,8 @@ splashButton?.addEventListener("click", () => {
   input.right = false;
   input.jump = false;
   isPlaying = true;
+  runStartMs = performance.now();
+  usedSkiSchoolDebugSpawn = false;
   music.start();
   hideSplash();
 });

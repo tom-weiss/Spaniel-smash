@@ -71,6 +71,7 @@ test('new obstacle templates are level-gated and slalom poles stay in standard p
   const levelOneRare = levelOne.templatesForTier('rare');
   assert.equal(levelOneRare.some((template) => template.type === 'black-spaniel'), false);
   assert.equal(levelOneRare.some((template) => template.type === 'ice-crevasse'), false);
+  assert.equal(levelOneRare.some((template) => template.type === 'ski-school-instructor'), false);
   assert.ok(levelOne.templatesForTier('standard').some((template) => template.type === 'slalom-poles'));
 
   const levelTwo = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
@@ -78,9 +79,11 @@ test('new obstacle templates are level-gated and slalom poles stay in standard p
   const levelTwoRare = levelTwo.templatesForTier('rare');
   assert.ok(levelTwoRare.some((template) => template.type === 'black-spaniel'));
   assert.ok(levelTwoRare.some((template) => template.type === 'ice-crevasse'));
+  assert.equal(levelTwoRare.some((template) => template.type === 'ski-school-instructor'), false);
 
   const levelThree = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   levelThree.speedLevel = 3;
+  assert.ok(levelThree.templatesForTier('rare').some((template) => template.type === 'ski-school-instructor'));
   assert.equal(levelThree.templatesForTier('super-rare').some((template) => template.type === 'naked-skier'), false);
 
   const levelFour = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
@@ -101,6 +104,44 @@ test('ice crevasse requires a jump to avoid damage', () => {
   jumping.forceSpawn({ type: 'ice-crevasse', obstacleId: 'ice-crevasse', jumpRule: 'high', x: 122, y: 366, width: 46, height: 24, speed: 0, lane: 5 });
   jumping.step(16, { left: false, right: false, jump: true });
   assert.equal(jumping.snapshot().lives, 3);
+});
+
+test('ski school spawn scales children by level and supports debug override count', () => {
+  const levelThree = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
+  levelThree.speedLevel = 3;
+  levelThree.spawnSkiSchoolDebug();
+  let school = levelThree.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(school.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
+  assert.equal(school.filter((entity) => entity.type === 'ski-school-child').length, 3);
+  const instructor = school.find((entity) => entity.type === 'ski-school-instructor');
+  const children = school.filter((entity) => entity.type === 'ski-school-child');
+  assert.ok(instructor);
+  assert.ok(children.every((entity) => entity.y > instructor.y));
+  assert.ok(school.every((entity) => entity.obstacleId === 'ski-school-snake'));
+  assert.ok(new Set(school.map((entity) => entity.lane)).size >= 2);
+
+  const beforeLanes = school.map((entity) => entity.lane);
+  levelThree.step(320, { left: false, right: false });
+  school = levelThree.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(school.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
+  assert.equal(school.filter((entity) => entity.type === 'ski-school-child').length, 3);
+  assert.ok(school.some((entity, index) => entity.lane !== beforeLanes[index]));
+
+  const levelSix = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
+  levelSix.speedLevel = 6;
+  levelSix.spawnSkiSchoolDebug();
+  const longSchool = levelSix.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(longSchool.filter((entity) => entity.type === 'ski-school-child').length, 9);
+
+  const debugOverride = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
+  debugOverride.spawnSkiSchoolDebug(4);
+  const overrideSchool = debugOverride.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(overrideSchool.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
+  assert.equal(overrideSchool.filter((entity) => entity.type === 'ski-school-child').length, 4);
+  debugOverride.step(32, { left: false, right: false });
+  const overrideAfterStep = debugOverride.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(overrideAfterStep.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
+  assert.equal(overrideAfterStep.filter((entity) => entity.type === 'ski-school-child').length, 4);
 });
 
 test('andy boss appears after spaniel threshold and jump defeat levels up with bonus', () => {
@@ -467,6 +508,82 @@ test('pixel renderer draws force field around player while immortal', () => {
     effects: []
   });
   assert.equal(offCase.calls.some((entry) => entry[0] === 100 && entry[1] === 302 && entry[2] === 24 && entry[3] === 1), false);
+});
+
+test('pixel renderer draws ski school instructor in red and children in varied colors', () => {
+  const calls = [];
+  let activeFillStyle = '#000';
+  const ctx = {
+    font: '16px monospace',
+    get fillStyle() {
+      return activeFillStyle;
+    },
+    set fillStyle(value) {
+      activeFillStyle = value;
+    },
+    fillRect: (...args) => calls.push({ args, fillStyle: activeFillStyle }),
+    fillText: () => {}
+  };
+  const renderer = new PixelRenderer(ctx, 360, 640);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 3,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 120,
+    playerY: 366,
+    playerJumpOffset: 0,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [
+      {
+        type: 'ski-school-instructor',
+        obstacleId: 'ski-school-snake',
+        jumpRule: 'low',
+        behaviorState: { kind: 'skiSchoolSnake', anchorLane: 5, laneSpan: 1, phaseMs: 0, phaseOffsetMs: 0, wavePeriodMs: 1080, paletteIndex: 0 },
+        x: 122,
+        y: 120,
+        width: 18,
+        height: 30,
+        speed: 1.3,
+        lane: 5,
+        direction: 1
+      },
+      {
+        type: 'ski-school-child',
+        obstacleId: 'ski-school-snake',
+        jumpRule: 'low',
+        behaviorState: { kind: 'skiSchoolSnake', anchorLane: 5, laneSpan: 1, phaseMs: 0, phaseOffsetMs: 170, wavePeriodMs: 1080, paletteIndex: 0 },
+        x: 122,
+        y: 104,
+        width: 16,
+        height: 28,
+        speed: 1.3,
+        lane: 5,
+        direction: 1
+      },
+      {
+        type: 'ski-school-child',
+        obstacleId: 'ski-school-snake',
+        jumpRule: 'low',
+        behaviorState: { kind: 'skiSchoolSnake', anchorLane: 5, laneSpan: 1, phaseMs: 0, phaseOffsetMs: 340, wavePeriodMs: 1080, paletteIndex: 1 },
+        x: 122,
+        y: 88,
+        width: 16,
+        height: 28,
+        speed: 1.3,
+        lane: 5,
+        direction: 1
+      }
+    ],
+    effects: []
+  });
+  assert.ok(calls.some((entry) => entry.fillStyle === '#dc2626'));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#2563eb'));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#16a34a'));
+  assert.equal(calls.some((entry) => entry.fillStyle === '#2563eb' && entry.args[2] === 8 && entry.args[3] === 9), false);
+  assert.ok(calls.some((entry) => entry.fillStyle === '#2563eb' && entry.args[2] === 4 && entry.args[3] === 6));
 });
 
 test('pixel renderer draws angled downhill skis and visible poles for skier sprite', () => {

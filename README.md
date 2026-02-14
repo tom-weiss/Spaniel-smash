@@ -3,13 +3,14 @@
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
-`v1.1.22` keeps the level-staggered obstacle sets and latest sprite updates, refreshes splash-screen character icons, and further polishes rendering: crash sprites now follow the current slimmer character style and the invulnerability force field is now centered to the current player sprite footprint.
+`v1.1.26` increases difficulty scaling with a steeper level-by-level spawn ramp, and extends ski-school snake length growth on higher levels.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | ![tree](docs/images/obstacles/tree.svg) | `tree` | `standard`, `rare`, `super-rare`, `mythic` | Moves vertically down slope. No lane switching. | Loses 1 life and triggers crash freeze (`650ms`) unless jump-clear applies. | Can clear only if jump is active and `jumpRule` is `low` or `high`. | Uses narrower tree collision bounds. Rendered as a pointed, layered conifer silhouette. |
 | ![rock](docs/images/obstacles/rock.svg) | `rock` | `standard`, `rare`, `super-rare`, `mythic` | Moves vertically down slope. No lane switching. | Loses 1 life and triggers crash freeze unless jump-clear applies. | Can be cleared while jump is active. | Uses tighter collision bounds than its sprite extents. |
 | ![skier](docs/images/obstacles/skier.svg) | `skier` | `standard` (`level 2+`), `rare` (`level 3+`), `mythic` | Moving obstacle with random lane-change attempts + cooldown. | Loses 1 life and triggers crash freeze unless jump-clear applies. | Can clear if jump is active and `jumpRule` is `low` or `high`. | Standard moving hazard behavior. |
+| ![ski school snake](docs/images/obstacles/ski-school-snake.svg) | `ski-school-instructor` + `ski-school-child` | `rare` (`level 3+`) | Multi-entity moving snake formation. Instructor leads from the top/front and children trail below with phased lateral weaving. | Contact damages player (unless invulnerable) and triggers crash freeze unless jump-clear applies. | Group members use `jumpRule: low`, so active jump can clear them. | Instructor always renders in red. Children render as smaller skier sprites with varied color palettes. Child count scales with level (`level 3 => 3`, then `+2` children per level beyond 3, capped at `16`). Members of the same ski-school group do not self-collide. |
 | ![naked skier](docs/images/obstacles/naked-skier.svg) | `naked-skier` | `super-rare` (`level 4+`) | Moving obstacle with random lane-change attempts + cooldown. | Loses 1 life and triggers crash freeze unless jump-clear applies. | Can clear if jump is active and `jumpRule` is `low` or `high`. | Very rare variant unlocked on higher levels. |
 | ![spaniel](docs/images/obstacles/spaniel.svg) | `spaniel` | `standard`, `rare`, `mythic` | Moving obstacle with random lane-change attempts + cooldown. | Gives `+100`, smash effects, and spawns `bloodstain` (no life loss). | N/A for score collision path. | Smashed count advances the current level toward the Andy boss trigger (`10-15` spaniels per level). Spaniel bodies are non-lethal for obstacle-vs-obstacle mover crash checks. Tail wag is visual-only. |
 | ![black spaniel](docs/images/obstacles/black-spaniel.svg) | `black-spaniel` | `rare` (`level 2+`) | Moving obstacle with random lane-change attempts + cooldown. | Gives `+200`, smash effects, and spawns `bloodstain` (no life loss). | N/A for score collision path. | Rare double-point spaniel variant; still counts toward boss spaniel goals. |
@@ -27,6 +28,7 @@
 
 - Level 1 uses a slower base spawn cadence and biases standard spawns toward `spaniel`, so non-spaniel hazards are less frequent at the start.
 - Obstacle pools are staggered by level: simpler hazards dominate level 1, with `black-spaniel`/`ice-crevasse` starting at level 2 and `naked-skier` joining at level 4.
+- `ski-school-snake` joins rare spawns at level 3; it starts with 3 children and adds 2 children per level after 3 (up to 16).
 - Obstacle spawn cadence tightens every level (with a lower cap), so total obstacle pressure increases as the run progresses.
 - Baseline downhill speed also scales up each level, before puddle/ice modifiers are applied.
 - Andy boss appears once the level spaniel target is reached (`10-15` range; first level target starts at `12`).
@@ -44,5 +46,6 @@
 ## Controls
 
 - Touch controls suppress long-press and gesture defaults to reduce accidental viewport zoom on mobile Safari while holding movement/jump buttons.
+- Debug/testing: press `p` within the first `1s` after starting a run to force-spawn a ski-school snake with exactly 4 children.
 
-Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `32ms` per level down to about `240ms`, and uses a faster post-level transition burst (down to about `210ms` floor). `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.
+Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `56ms` per level down to about `150ms`, and uses a faster post-level transition burst (down to about `150ms` floor). `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.
