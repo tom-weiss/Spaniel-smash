@@ -15,10 +15,12 @@
         font-family: "Press Start 2P", monospace;
       }
       .shell {
+        position: relative;
         padding: 16px;
         border: 4px solid #38bdf8;
         border-radius: 10px;
         box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+        width: fit-content;
       }
       canvas {
         image-rendering: pixelated;
@@ -32,11 +34,52 @@
         font-family: monospace;
         margin: 8px 0 0;
       }
+      .startup-banner {
+        position: absolute;
+        inset: 24px 24px auto;
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid #38bdf8;
+        border-radius: 8px;
+        color: #f8fafc;
+        padding: 10px;
+        z-index: 2;
+        text-align: center;
+        font-family: monospace;
+        font-size: 13px;
+      }
+      .startup-banner.hidden {
+        display: none;
+      }
+      .controls {
+        display: none;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .control {
+        flex: 1;
+        border: 2px solid #38bdf8;
+        border-radius: 8px;
+        padding: 12px 10px;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      @media (pointer: coarse) {
+        .controls {
+          display: flex;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="shell">
+      <div id="startup-banner" class="startup-banner">Ready? Press any key or tap to start.</div>
       <canvas id="game" width="360" height="640"></canvas>
+      <div class="controls" aria-label="Touch controls">
+        <button id="control-left" class="control" aria-label="Move left">⬅ Left</button>
+        <button id="control-right" class="control" aria-label="Move right">Right ➡</button>
+      </div>
       <p>Arrow keys move skier. Smash spaniels. Avoid obstacles + Andy.</p>
     </div>
     <script type="module" src="./dist/main.js"></script>

@@ -13,6 +13,14 @@ if (!ctx) {
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const input = { left: false, right: false };
+const startupBanner = document.getElementById("startup-banner");
+const dismissBanner = (): void => {
+  if (!startupBanner) {
+    return;
+  }
+
+  startupBanner.classList.add("hidden");
+};
 
 window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowLeft") {
@@ -30,6 +38,37 @@ window.addEventListener("keyup", (event) => {
     input.right = false;
   }
 });
+
+const leftControl = document.getElementById("control-left");
+const rightControl = document.getElementById("control-right");
+
+function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): void {
+  if (!control) {
+    return;
+  }
+
+  const activate = (event: Event): void => {
+    event.preventDefault();
+    dismissBanner();
+    input[key] = true;
+  };
+
+  const deactivate = (event: Event): void => {
+    event.preventDefault();
+    input[key] = false;
+  };
+
+  control.addEventListener("pointerdown", activate);
+  control.addEventListener("pointerup", deactivate);
+  control.addEventListener("pointercancel", deactivate);
+  control.addEventListener("pointerleave", deactivate);
+}
+
+bindTouchControl(leftControl, "left");
+bindTouchControl(rightControl, "right");
+
+window.addEventListener("keydown", dismissBanner, { once: true });
+window.addEventListener("pointerdown", dismissBanner, { once: true });
 
 let lastFrame = performance.now();
 
