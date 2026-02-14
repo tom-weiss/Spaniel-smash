@@ -1,4 +1,4 @@
-export type EntityType = "obstacle" | "spaniel" | "andy";
+export type EntityType = "tree" | "rock" | "skier" | "spaniel" | "andy";
 
 export interface Entity {
   type: EntityType;
@@ -40,6 +40,7 @@ export class SpanielSmashGame {
   private entities: Entity[] = [];
   private rng: () => number;
   private spawnClock = 0;
+  private laneSwitchCooldownMs = 0;
 
   constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 3) {
     this.width = width;
@@ -54,7 +55,7 @@ export class SpanielSmashGame {
       return;
     }
 
-    this.handleInput(input);
+    this.handleInput(input, deltaMs);
     this.spawnClock += deltaMs;
     if (this.spawnClock >= 450) {
       this.spawnClock = 0;
@@ -77,12 +78,19 @@ export class SpanielSmashGame {
     this.entities = this.entities.filter((entity) => entity.y < this.height + 40);
   }
 
-  private handleInput(input: InputState): void {
+  private handleInput(input: InputState, deltaMs: number): void {
+    this.laneSwitchCooldownMs = Math.max(0, this.laneSwitchCooldownMs - deltaMs);
+    if (this.laneSwitchCooldownMs > 0) {
+      return;
+    }
+
     if (input.left && !input.right) {
       this.playerLane = Math.max(0, this.playerLane - 1);
+      this.laneSwitchCooldownMs = 140;
     }
     if (input.right && !input.left) {
       this.playerLane = Math.min(this.laneCount - 1, this.playerLane + 1);
+      this.laneSwitchCooldownMs = 140;
     }
   }
 
@@ -103,14 +111,38 @@ export class SpanielSmashGame {
     }
 
     const roll = this.rng();
-    if (roll < 0.58) {
+    if (roll < 0.18) {
       this.entities.push({
-        type: "obstacle",
+        type: "tree",
+        x: spawnX,
+        y: -24,
+        width: this.laneWidth * 0.5,
+        height: 30,
+        speed: 1.9 + this.rng()
+      });
+      return;
+    }
+
+    if (roll < 0.36) {
+      this.entities.push({
+        type: "rock",
+        x: spawnX,
+        y: -20,
+        width: this.laneWidth * 0.4,
+        height: 20,
+        speed: 2.5 + this.rng() * 0.9
+      });
+      return;
+    }
+
+    if (roll < 0.56) {
+      this.entities.push({
+        type: "skier",
         x: spawnX,
         y: -24,
         width: this.laneWidth * 0.56,
-        height: 26,
-        speed: 2.2 + this.rng()
+        height: 30,
+        speed: 2.1 + this.rng()
       });
       return;
     }
@@ -168,6 +200,19 @@ export class SpanielSmashGame {
     this.entities.push(entity);
   }
 
+  public restart(): void {
+    this.playerLane = 1;
+    this.lives = 3;
+    this.score = 0;
+    this.speedLevel = 1;
+    this.spanielsSmashed = 0;
+    this.gameOver = false;
+    this.witchAttackActive = false;
+    this.entities = [];
+    this.spawnClock = 0;
+    this.laneSwitchCooldownMs = 0;
+  }
+
   public snapshot(): GameSnapshot {
     return {
       lives: this.lives,
@@ -218,8 +263,12 @@ export class PixelRenderer {
     drawSkier(this.ctx, snapshot.playerX, this.height - 58, "#2e3fbc", "#ffd166");
 
     for (const entity of snapshot.entities) {
-      if (entity.type === "obstacle") {
-        drawObstacle(this.ctx, entity.x, entity.y);
+      if (entity.type === "tree") {
+        drawTree(this.ctx, entity.x, entity.y);
+      } else if (entity.type === "rock") {
+        drawRock(this.ctx, entity.x, entity.y);
+      } else if (entity.type === "skier") {
+        drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#f1fa8c");
       } else if (entity.type === "spaniel") {
         drawSpaniel(this.ctx, entity.x, entity.y);
       } else {
@@ -238,15 +287,25 @@ export class PixelRenderer {
       this.ctx.fillRect(0, 0, this.width, this.height);
       this.ctx.fillStyle = "#fff";
       this.ctx.fillText("GAME OVER", this.width / 2 - 56, this.height / 2);
+      this.ctx.fillText(`Final Score ${snapshot.score}`, this.width / 2 - 78, this.height / 2 + 24);
+      this.ctx.fillText("Tap Restart below", this.width / 2 - 70, this.height / 2 + 48);
     }
   }
 }
 
-function drawObstacle(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#2b2d42";
-  ctx.fillRect(x, y, 18, 18);
-  ctx.fillStyle = "#ef233c";
-  ctx.fillRect(x + 3, y + 4, 12, 4);
+function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#2d6a4f";
+  ctx.fillRect(x + 3, y, 14, 18);
+  ctx.fillRect(x, y + 8, 20, 12);
+  ctx.fillStyle = "#7f5539";
+  ctx.fillRect(x + 8, y + 20, 4, 10);
+}
+
+function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#6c757d";
+  ctx.fillRect(x + 2, y + 4, 16, 10);
+  ctx.fillStyle = "#adb5bd";
+  ctx.fillRect(x + 5, y + 2, 10, 4);
 }
 
 function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void {
