@@ -507,6 +507,10 @@ export class SpanielSmashGame {
                 continue;
             }
             if (entity.type === "puddle-patch") {
+                if (this.jumpTimerMs > 0) {
+                    survivors.push(entity);
+                    continue;
+                }
                 const id = entity.id ?? -1;
                 if (id >= 0) {
                     nextTouchingSurfaceEntityIds.add(id);
@@ -518,6 +522,10 @@ export class SpanielSmashGame {
                 continue;
             }
             if (entity.type === "ice-patch") {
+                if (this.jumpTimerMs > 0) {
+                    survivors.push(entity);
+                    continue;
+                }
                 const id = entity.id ?? -1;
                 if (id >= 0) {
                     nextTouchingSurfaceEntityIds.add(id);
@@ -627,16 +635,16 @@ export class SpanielSmashGame {
             for (let j = i + 1; j < this.entities.length; j += 1) {
                 const first = this.entities[i];
                 const second = this.entities[j];
-                if (first.type === "andy" || second.type === "andy" || first.type === "poo-bag" || second.type === "poo-bag" || first.type === "bloodstain" || second.type === "bloodstain") {
+                if (first.type === "andy" || second.type === "andy" || first.type === "poo-bag" || second.type === "poo-bag") {
                     continue;
                 }
                 if (!intersects(first, second)) {
                     continue;
                 }
-                if (this.isMovingObstacle(first)) {
+                if (this.isMovingObstacle(first) && this.isLethalForMovingObstacleCollision(second)) {
                     indicesToTransform.add(i);
                 }
-                if (this.isMovingObstacle(second)) {
+                if (this.isMovingObstacle(second) && this.isLethalForMovingObstacleCollision(first)) {
                     indicesToTransform.add(j);
                 }
             }
@@ -664,6 +672,15 @@ export class SpanielSmashGame {
     }
     isMovingObstacle(entity) {
         return entity.type === "skier" || entity.type === "spaniel" || entity.type === "helicopter-downdraft";
+    }
+    isLethalForMovingObstacleCollision(entity) {
+        if (entity.type === "bloodstain" || entity.type === "puddle-patch" || entity.type === "ice-patch" || entity.type === "spaniel") {
+            return false;
+        }
+        if (entity.type === "drone-package-drop" && entity.behaviorState?.kind === "droneDrop" && entity.behaviorState.phase === "telegraph") {
+            return false;
+        }
+        return true;
     }
     spawnSmashEffect(x, y, kind) { this.effects.push({ kind, x, y, ttlMs: 300, maxTtlMs: 300 }); }
     spawnBloodstain(entity) {

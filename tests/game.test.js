@@ -84,7 +84,7 @@ test('andy boss appears after spaniel threshold and jump defeat levels up with b
   assert.equal(afterDefeat.score, 3000);
 });
 
-test('moving obstacle collisions convert moving entities to the correct crash remains', () => {
+test('moving obstacles only convert when colliding with lethal obstacles', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.forceSpawn({ type: 'skier', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
   game.forceSpawn({ type: 'spaniel', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
@@ -92,8 +92,9 @@ test('moving obstacle collisions convert moving entities to the correct crash re
   game.step(16, { left: false, right: false });
   const collided = game.snapshot();
   const bloodstains = collided.entities.filter((entity) => entity.type === 'bloodstain');
-  assert.equal(bloodstains.length, 2);
-  assert.ok(collided.effects.some((effect) => effect.kind === 'obstacle-crash'));
+  assert.equal(bloodstains.length, 1);
+  assert.ok(collided.entities.some((entity) => entity.type === 'skier'));
+  assert.equal(collided.entities.some((entity) => entity.type === 'spaniel'), false);
   assert.ok(collided.effects.some((effect) => effect.kind === 'spaniel-smash'));
 });
 
@@ -109,6 +110,33 @@ test('bloodstains do not transform skiers or spaniels on overlap', () => {
   assert.ok(snap.entities.some((entity) => entity.type === 'skier'));
   assert.ok(snap.entities.some((entity) => entity.type === 'spaniel'));
   assert.equal(snap.entities.filter((entity) => entity.type === 'bloodstain').length, 2);
+});
+
+test('puddle, ice, and drone telegraph do not transform moving obstacles on overlap', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'puddle-patch', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'skier', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+  game.forceSpawn({ type: 'ice-patch', x: 152, y: 120, width: 20, height: 20, speed: 0, lane: 6 });
+  game.forceSpawn({ type: 'spaniel', x: 152, y: 120, width: 20, height: 20, speed: 0, lane: 6, laneSwitchCooldownMs: 999 });
+  game.forceSpawn({
+    type: 'drone-package-drop',
+    obstacleId: 'drone-package-drop',
+    behaviorState: { kind: 'droneDrop', phase: 'telegraph', phaseMs: 650 },
+    x: 182,
+    y: 120,
+    width: 20,
+    height: 20,
+    speed: 0,
+    lane: 7
+  });
+  game.forceSpawn({ type: 'helicopter-downdraft', x: 182, y: 120, width: 20, height: 20, speed: 0, lane: 7, laneSwitchCooldownMs: 999 });
+
+  game.step(16, { left: false, right: false });
+  const snap = game.snapshot();
+  assert.ok(snap.entities.some((entity) => entity.type === 'skier'));
+  assert.ok(snap.entities.some((entity) => entity.type === 'spaniel'));
+  assert.ok(snap.entities.some((entity) => entity.type === 'helicopter-downdraft'));
+  assert.equal(snap.entities.filter((entity) => entity.type === 'bloodstain').length, 0);
 });
 
 
@@ -352,6 +380,18 @@ test('ice patch collision applies speed-boost timer and faster turn cadence', ()
 
   game.step(90, { left: true, right: false });
   assert.notEqual(game.snapshot().playerX, afterFirstTurn);
+});
+
+test('jumping over puddle and ice patches does not apply surface effects', () => {
+  const puddleGame = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  puddleGame.forceSpawn({ type: 'puddle-patch', obstacleId: 'puddle-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  puddleGame.step(16, { left: false, right: false, jump: true });
+  assert.equal(puddleGame.snapshot().activeEffects.puddleSlowMs, 0);
+
+  const iceGame = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  iceGame.forceSpawn({ type: 'ice-patch', obstacleId: 'ice-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  iceGame.step(16, { left: false, right: false, jump: true });
+  assert.equal(iceGame.snapshot().activeEffects.wetPaintSlipMs, 0);
 });
 
 test('puddle and ice effects stack when hitting multiple patches', () => {
