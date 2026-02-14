@@ -30,7 +30,7 @@ const STANDARD_OBSTACLES: ObstacleTemplate[] = [
   { type: "tree", obstacleId: "cracked-sidewalk-slab", jumpRule: "low", widthScale: 0.5, height: 24, speed: 2.2, moving: false },
   { type: "rock", obstacleId: "trash-bag-cluster", jumpRule: "low", widthScale: 0.55, height: 22, speed: 2.2, moving: false },
   { type: "tree", obstacleId: "construction-cone-pair", jumpRule: "low", widthScale: 0.52, height: 24, speed: 2.2, moving: false },
-  { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false },
+  { type: "ice-patch", obstacleId: "ice-patch", jumpRule: "none", widthScale: 0.58, height: 20, speed: 2.2, moving: false },
   { type: "tree", obstacleId: "mail-crate-stack", jumpRule: "high", widthScale: 0.58, height: 32, speed: 2.2, moving: false },
   { type: "skier", obstacleId: "rolling-skateboard", jumpRule: "low", widthScale: 0.56, height: 28, speed: 1.6, moving: true },
   { type: "skier", obstacleId: "jogger-crossing", jumpRule: "none", widthScale: 0.56, height: 30, speed: 1.4, moving: true },
@@ -42,7 +42,7 @@ const STANDARD_OBSTACLES: ObstacleTemplate[] = [
 const RARE_OBSTACLES: ObstacleTemplate[] = [
   { type: "tree", obstacleId: "fence-segment", jumpRule: "high", widthScale: 0.62, height: 36, speed: 2.3, moving: false },
   { type: "rock", obstacleId: "open-manhole", jumpRule: "high", widthScale: 0.6, height: 28, speed: 2.3, moving: false },
-  { type: "ice-patch", obstacleId: "ice-patch", jumpRule: "none", widthScale: 0.58, height: 20, speed: 1.3, moving: false },
+  { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false },
   { type: "skier", obstacleId: "fallen-signboard", jumpRule: "high", widthScale: 0.62, height: 30, speed: 1.5, moving: true },
   { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false },
   { type: "andy", obstacleId: "street-sweeper-pass", jumpRule: "high", widthScale: 0.72, height: 34, speed: 1.4, moving: true },
@@ -175,9 +175,17 @@ export class SpanielSmashGame {
   private static readonly movingEntityBaseSpeed = 1.2;
   private static readonly jumpDurationMs = 520;
   private static readonly puddleSlowDurationMs = 900;
-  private static readonly wetPaintSlipDurationMs = 1400;
+  private static readonly icePatchBoostDurationMs = 1400;
   private static readonly droneTelegraphDurationMs = 650;
   private static readonly downdraftPushIntervalMs = 180;
+  private static readonly defaultLaneSwitchCooldownMs = 140;
+  private static readonly defaultJumpCooldownMs = 560;
+  private static readonly puddleLaneSwitchCooldownMs = 280;
+  private static readonly puddleJumpCooldownMs = 920;
+  private static readonly iceLaneSwitchCooldownMs = 80;
+  private static readonly iceJumpCooldownMs = 360;
+  private static readonly puddleScrollSpeedMultiplier = 0.72;
+  private static readonly iceScrollSpeedMultiplier = 1.35;
 
   constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 20) {
     this.width = width;
@@ -211,7 +219,7 @@ export class SpanielSmashGame {
       this.spawnEntity();
     }
 
-    const speedMultiplier = 1 + (this.speedLevel - 1) * 0.2;
+    const speedMultiplier = (1 + (this.speedLevel - 1) * 0.2) * this.currentScrollSpeedMultiplier();
     this.sideObstacleOffsetY += SpanielSmashGame.staticObstacleSpeed * speedMultiplier * (deltaMs / 16.67);
     for (const entity of this.entities) {
       this.tickEntityBehaviorState(entity, deltaMs);
@@ -231,33 +239,55 @@ export class SpanielSmashGame {
     this.laneSwitchCooldownMs = Math.max(0, this.laneSwitchCooldownMs - deltaMs);
     this.jumpCooldownMs = Math.max(0, this.jumpCooldownMs - deltaMs);
     this.jumpTimerMs = Math.max(0, this.jumpTimerMs - deltaMs);
+    const controls = this.currentControlProfile();
 
     if (input.jump && this.jumpCooldownMs === 0) {
       this.jumpTimerMs = SpanielSmashGame.jumpDurationMs;
-      this.jumpCooldownMs = this.puddleSlowMs > 0 ? 760 : 560;
+      this.jumpCooldownMs = controls.jumpCooldownMs;
     }
 
     if (this.laneSwitchCooldownMs > 0) {
       return;
     }
 
-    const laneSwitchCooldown = this.puddleSlowMs > 0 ? 230 : 140;
+    const laneSwitchCooldown = controls.laneSwitchCooldownMs;
     if (input.left && !input.right) {
-      if (this.wetPaintSlipMs > 0 && this.rng() < 0.4) {
-        this.laneSwitchCooldownMs = 260;
-        return;
-      }
       this.playerLane = Math.max(this.minPlayableLane(), this.playerLane - 1);
       this.laneSwitchCooldownMs = laneSwitchCooldown;
     }
     if (input.right && !input.left) {
-      if (this.wetPaintSlipMs > 0 && this.rng() < 0.4) {
-        this.laneSwitchCooldownMs = 260;
-        return;
-      }
       this.playerLane = Math.min(this.maxPlayableLane(), this.playerLane + 1);
       this.laneSwitchCooldownMs = laneSwitchCooldown;
     }
+  }
+
+  private currentControlProfile(): { laneSwitchCooldownMs: number; jumpCooldownMs: number } {
+    if (this.puddleSlowMs > 0) {
+      return {
+        laneSwitchCooldownMs: SpanielSmashGame.puddleLaneSwitchCooldownMs,
+        jumpCooldownMs: SpanielSmashGame.puddleJumpCooldownMs
+      };
+    }
+    if (this.wetPaintSlipMs > 0) {
+      return {
+        laneSwitchCooldownMs: SpanielSmashGame.iceLaneSwitchCooldownMs,
+        jumpCooldownMs: SpanielSmashGame.iceJumpCooldownMs
+      };
+    }
+    return {
+      laneSwitchCooldownMs: SpanielSmashGame.defaultLaneSwitchCooldownMs,
+      jumpCooldownMs: SpanielSmashGame.defaultJumpCooldownMs
+    };
+  }
+
+  private currentScrollSpeedMultiplier(): number {
+    if (this.puddleSlowMs > 0) {
+      return SpanielSmashGame.puddleScrollSpeedMultiplier;
+    }
+    if (this.wetPaintSlipMs > 0) {
+      return SpanielSmashGame.iceScrollSpeedMultiplier;
+    }
+    return 1;
   }
 
   private spawnEntity(): void {
@@ -429,7 +459,7 @@ export class SpanielSmashGame {
       }
 
       if (entity.type === "ice-patch") {
-        this.wetPaintSlipMs = SpanielSmashGame.wetPaintSlipDurationMs;
+        this.wetPaintSlipMs = SpanielSmashGame.icePatchBoostDurationMs;
         survivors.push(entity);
         continue;
       }
@@ -722,14 +752,15 @@ export class PixelRenderer {
     this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(20, 0, this.width - 40, this.height);
     this.drawSlopeEdges(snapshot.sideObstacleOffsetY);
+    const isJumping = !snapshot.isCrashActive && snapshot.playerJumpOffset > 0;
 
     if (snapshot.isCrashActive) {
       drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
-    } else {
+    } else if (!isJumping) {
       drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
-      if (snapshot.playerJumpOffset > 0) {
-        drawJumpShadow(this.ctx, snapshot.playerX, snapshot.playerY, snapshot.playerJumpOffset);
-      }
+    }
+    if (isJumping) {
+      drawJumpShadow(this.ctx, snapshot.playerX, snapshot.playerY, snapshot.playerJumpOffset);
     }
 
     for (const entity of snapshot.entities) {
@@ -757,6 +788,9 @@ export class PixelRenderer {
       else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y);
       else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
       else drawWitch(this.ctx, entity.x, entity.y);
+    }
+    if (isJumping) {
+      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
     }
 
     for (const effect of snapshot.effects) drawSmashEffect(this.ctx, effect);

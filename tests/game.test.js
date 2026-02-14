@@ -299,12 +299,12 @@ test('puddle patch collision applies slow timer and longer turn cooldown', () =>
   const afterMove = game.snapshot().playerX;
   game.step(150, { left: true, right: false });
   assert.equal(game.snapshot().playerX, afterMove);
-  game.step(90, { left: true, right: false });
+  game.step(140, { left: true, right: false });
   assert.notEqual(game.snapshot().playerX, afterMove);
 });
 
-test('ice patch collision applies slip timer and can ignore a lane-change input', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0, 0, 0, 0.2, 0.9]), 10);
+test('ice patch collision applies speed-boost timer and faster turn cadence', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.forceSpawn({ type: 'ice-patch', obstacleId: 'ice-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
 
   game.step(16, { left: false, right: false });
@@ -314,11 +314,31 @@ test('ice patch collision applies slip timer and can ignore a lane-change input'
 
   const startX = afterHit.playerX;
   game.step(16, { left: true, right: false });
-  assert.equal(game.snapshot().playerX, startX);
-  game.step(200, { left: true, right: false });
-  assert.equal(game.snapshot().playerX, startX);
-  game.step(80, { left: true, right: false });
-  assert.notEqual(game.snapshot().playerX, startX);
+  const afterFirstTurn = game.snapshot().playerX;
+  assert.notEqual(afterFirstTurn, startX);
+
+  game.step(90, { left: true, right: false });
+  assert.notEqual(game.snapshot().playerX, afterFirstTurn);
+});
+
+test('puddle and ice effects adjust overall world scrolling speed', () => {
+  const base = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  const slow = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  const fast = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+
+  slow.puddleSlowMs = 900;
+  fast.wetPaintSlipMs = 1400;
+
+  base.step(100, { left: false, right: false });
+  slow.step(100, { left: false, right: false });
+  fast.step(100, { left: false, right: false });
+
+  const baseOffset = base.snapshot().sideObstacleOffsetY;
+  const slowOffset = slow.snapshot().sideObstacleOffsetY;
+  const fastOffset = fast.snapshot().sideObstacleOffsetY;
+
+  assert.ok(slowOffset < baseOffset);
+  assert.ok(fastOffset > baseOffset);
 });
 
 test('drone package drop telegraph is harmless then falling phase can deal damage', () => {
@@ -515,6 +535,40 @@ test('renderer no longer draws text obstacle labels for obstacle ids', () => {
   });
 
   assert.equal(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('CRACKED SID')), false);
+});
+
+test('jumping player renders in front of obstacles', () => {
+  const calls = [];
+  const ctx = {
+    fillStyle: '#000',
+    font: '16px monospace',
+    fillRect: (...args) => calls.push(args),
+    fillText: () => {}
+  };
+  const renderer = new PixelRenderer(ctx, 360, 640);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 12,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [
+      { type: 'tree', x: 10, y: 10, width: 20, height: 20, speed: 0 }
+    ],
+    effects: []
+  });
+
+  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 13 && entry[1] === 10 && entry[2] === 14 && entry[3] === 18);
+  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 105 && entry[1] === 299 && entry[2] === 12 && entry[3] === 12);
+
+  assert.ok(treeBodyIndex >= 0);
+  assert.ok(playerBodyIndex >= 0);
+  assert.ok(playerBodyIndex > treeBodyIndex);
 });
 
 test('side edge tree and rock decorations never overlap', () => {
