@@ -44,21 +44,46 @@
         font-family: monospace;
         margin: 8px 0 0;
       }
-      .startup-banner {
+      .splash {
         position: absolute;
-        inset: 24px 24px auto;
-        background: rgba(15, 23, 42, 0.9);
+        inset: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid #38bdf8;
+        border-radius: 10px;
+        z-index: 3;
+      }
+      .splash.hidden {
+        display: none;
+      }
+      .splash-panel {
+        max-width: 300px;
+        text-align: center;
+        padding: 14px;
+      }
+      #splash-image {
+        width: 110px;
+        image-rendering: pixelated;
+      }
+      .splash h1 {
+        font-size: 18px;
+        margin: 8px 0 12px;
+        color: #f8fafc;
+      }
+      .splash p {
+        margin: 0 0 12px;
+        line-height: 1.45;
+        color: #bfdbfe;
+      }
+      .splash button {
         border: 2px solid #38bdf8;
         border-radius: 8px;
+        background: #1d4ed8;
         color: #f8fafc;
-        padding: 10px;
-        z-index: 2;
-        text-align: center;
-        font-family: monospace;
-        font-size: 13px;
-      }
-      .startup-banner.hidden {
-        display: none;
+        font-family: inherit;
+        padding: 10px 14px;
+        cursor: pointer;
       }
       .controls {
         display: none;
@@ -91,7 +116,14 @@
   </head>
   <body>
     <div class="shell">
-      <div id="startup-banner" class="startup-banner">Ready? Press any key or tap to start.</div>
+      <div id="splash-screen" class="splash">
+        <div class="splash-panel">
+          <img id="splash-image" alt="Pixel art spaniel" />
+          <h1 id="splash-title">SPANIEL SMASH</h1>
+          <p id="splash-copy">Arrow keys or tap controls to move. Smash spaniels, dodge trees, rocks, skiers, and Andy.</p>
+          <button id="splash-start" type="button">START</button>
+        </div>
+      </div>
       <canvas id="game" width="360" height="640"></canvas>
       <div class="controls" aria-label="Touch controls">
         <button id="control-left" class="control" aria-label="Move left">
@@ -99,9 +131,6 @@
         </button>
         <button id="control-right" class="control" aria-label="Move right">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8.6 19.4a1 1 0 0 1 0-1.4L13.59 13H4a1 1 0 1 1 0-2h9.59L8.6 6.01A1 1 0 1 1 10.01 4.6l6.7 6.69a1 1 0 0 1 0 1.42l-6.7 6.69a1 1 0 0 1-1.41 0Z"/></svg>
-        </button>
-        <button id="control-restart" class="control" aria-label="Restart game" hidden>
-          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.93 8H3.5a1 1 0 1 1 0-2h3.25a1 1 0 0 1 1 1v3.25a1 1 0 1 1-2 0v-.88A5 5 0 1 0 12 7h-1.4a1 1 0 1 1 0-2H12Z"/></svg>
         </button>
       </div>
       <p id="instruction-text">Arrow keys move skier. Smash spaniels. Avoid obstacles + Andy.</p>
