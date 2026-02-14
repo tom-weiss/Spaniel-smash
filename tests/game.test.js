@@ -54,19 +54,34 @@ test('smashing spaniel produces score, animation effect, and bloodstain obstacle
   assert.equal(game.snapshot().effects.length, 0);
 });
 
-test('spaniel streak upgrades speed level and can spawn andy', () => {
+test('andy boss appears after spaniel threshold and jump defeat levels up with bonus', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.4, 0.2, 0.2]), 10);
-  for (let i = 0; i < 10; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     game.forceSpawn({ type: 'spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
     game.step(16, { left: false, right: false });
   }
 
-  const snap = game.snapshot();
-  assert.equal(snap.score, 1000);
-  assert.equal(snap.speedLevel, 2);
+  const withBoss = game.snapshot();
+  assert.equal(withBoss.score, 1200);
+  assert.equal(withBoss.speedLevel, 1);
+  assert.equal(withBoss.levelSpanielsSmashed, 12);
+  assert.equal(withBoss.isBossActive, true);
 
-  game.step(450, { left: false, right: false });
-  assert.ok(game.snapshot().entities.some((entity) => entity.type === 'andy'));
+  const runtimeBoss = game.entities.find((entity) => entity.type === 'andy' && entity.behaviorState?.kind === 'andyBoss');
+  assert.ok(runtimeBoss);
+  runtimeBoss.behaviorState.phase = 'hovering';
+  runtimeBoss.behaviorState.phaseMs = 4000;
+  runtimeBoss.y = 366;
+  runtimeBoss.speed = 0;
+  runtimeBoss.lane = 5;
+
+  game.step(16, { left: false, right: false, jump: true });
+  const afterDefeat = game.snapshot();
+  assert.equal(afterDefeat.isBossActive, false);
+  assert.equal(afterDefeat.speedLevel, 2);
+  assert.equal(afterDefeat.levelSpanielsSmashed, 0);
+  assert.ok(afterDefeat.levelUpBannerMs > 0);
+  assert.equal(afterDefeat.score, 3000);
 });
 
 test('moving obstacle collisions convert moving entities to the correct crash remains', () => {
@@ -80,6 +95,20 @@ test('moving obstacle collisions convert moving entities to the correct crash re
   assert.equal(bloodstains.length, 2);
   assert.ok(collided.effects.some((effect) => effect.kind === 'obstacle-crash'));
   assert.ok(collided.effects.some((effect) => effect.kind === 'spaniel-smash'));
+});
+
+test('bloodstains do not transform skiers or spaniels on overlap', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'bloodstain', x: 122, y: 120, width: 20, height: 18, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'skier', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+  game.forceSpawn({ type: 'bloodstain', x: 152, y: 200, width: 20, height: 18, speed: 0, lane: 6 });
+  game.forceSpawn({ type: 'spaniel', x: 152, y: 200, width: 20, height: 20, speed: 0, lane: 6, laneSwitchCooldownMs: 999 });
+
+  game.step(16, { left: false, right: false });
+  const snap = game.snapshot();
+  assert.ok(snap.entities.some((entity) => entity.type === 'skier'));
+  assert.ok(snap.entities.some((entity) => entity.type === 'spaniel'));
+  assert.equal(snap.entities.filter((entity) => entity.type === 'bloodstain').length, 2);
 });
 
 
@@ -117,12 +146,15 @@ test('obstacle collision bloodstains keep no obstacle metadata and do not hurt p
 
 test('non-spaniel collisions remove lives and game over freezes state updates', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.playerImmortalMs = 0;
   game.forceSpawn({ type: 'tree', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false });
   game.step(700, { left: false, right: false });
+  game.playerImmortalMs = 0;
   game.forceSpawn({ type: 'rock', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false });
   game.step(700, { left: false, right: false });
+  game.playerImmortalMs = 0;
   game.forceSpawn({ type: 'andy', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
   game.step(16, { left: false, right: false });
 
@@ -258,6 +290,7 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
 
 test('trees cannot be cleared by jump', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.playerImmortalMs = 0;
   game.forceSpawn({ type: 'tree', obstacleTier: 'standard', jumpRule: 'none', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false, jump: true });
   assert.equal(game.snapshot().lives, 2);
@@ -321,6 +354,32 @@ test('ice patch collision applies speed-boost timer and faster turn cadence', ()
   assert.notEqual(game.snapshot().playerX, afterFirstTurn);
 });
 
+test('puddle and ice effects stack when hitting multiple patches', () => {
+  const slowGame = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  slowGame.forceSpawn({ type: 'puddle-patch', obstacleId: 'puddle-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  slowGame.forceSpawn({ type: 'puddle-patch', obstacleId: 'puddle-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  slowGame.step(16, { left: false, right: false });
+  assert.ok(slowGame.snapshot().activeEffects.puddleSlowMs > 900);
+
+  slowGame.step(16, { left: true, right: false });
+  const slowFirstTurn = slowGame.snapshot().playerX;
+  slowGame.step(320, { left: true, right: false });
+  assert.equal(slowGame.snapshot().playerX, slowFirstTurn);
+  slowGame.step(120, { left: true, right: false });
+  assert.notEqual(slowGame.snapshot().playerX, slowFirstTurn);
+
+  const fastGame = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  fastGame.forceSpawn({ type: 'ice-patch', obstacleId: 'ice-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  fastGame.forceSpawn({ type: 'ice-patch', obstacleId: 'ice-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
+  fastGame.step(16, { left: false, right: false });
+  assert.ok(fastGame.snapshot().activeEffects.wetPaintSlipMs > 1400);
+
+  fastGame.step(16, { left: true, right: false });
+  const fastFirstTurn = fastGame.snapshot().playerX;
+  fastGame.step(50, { left: true, right: false });
+  assert.notEqual(fastGame.snapshot().playerX, fastFirstTurn);
+});
+
 test('puddle and ice effects adjust overall world scrolling speed', () => {
   const base = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   const slow = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
@@ -370,8 +429,51 @@ test('drone package drop telegraph is harmless then falling phase can deal damag
   runtimeDrone.direction = 1;
   runtimeDrone.lane = 5;
 
+  game.playerImmortalMs = 0;
   game.step(16, { left: false, right: false });
   assert.equal(game.snapshot().lives, 2);
+});
+
+test('andy boss throws poo bags and level completes when boss exits', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.playerImmortalMs = 0;
+  game.andyBossActive = true;
+  game.forceSpawn({
+    type: 'andy',
+    obstacleId: 'andy-boss',
+    jumpRule: 'high',
+    behaviorState: { kind: 'andyBoss', phase: 'hovering', phaseMs: 2000, throwCooldownMs: 0 },
+    x: 122,
+    y: 60,
+    width: 28,
+    height: 34,
+    speed: 0,
+    lane: 5,
+    laneSwitchCooldownMs: 0
+  });
+
+  game.step(16, { left: false, right: false });
+  const poo = game.entities.find((entity) => entity.type === 'poo-bag');
+  assert.ok(poo);
+  poo.y = 366;
+  poo.speed = 0;
+  poo.lane = 5;
+
+  game.step(16, { left: false, right: false });
+  assert.equal(game.snapshot().lives, 2);
+  assert.ok(game.snapshot().effects.some((effect) => effect.kind === 'poo-splat'));
+
+  game.step(700, { left: false, right: false });
+  const boss = game.entities.find((entity) => entity.type === 'andy' && entity.behaviorState?.kind === 'andyBoss');
+  assert.ok(boss);
+  boss.behaviorState.phase = 'exiting';
+  boss.y = 660;
+
+  game.step(16, { left: false, right: false });
+  const afterExit = game.snapshot();
+  assert.equal(afterExit.isBossActive, false);
+  assert.equal(afterExit.speedLevel, 2);
+  assert.ok(afterExit.levelUpBannerMs > 0);
 });
 
 test('helicopter downdraft pushes the player lane on its pulse interval', () => {
@@ -405,10 +507,10 @@ test('moving entity lane logic covers andy pursuit, bounds, and blocked lane fal
   const game = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.9, 0.9, 0.9]), 10);
 
   game.forceSpawn({ type: 'andy', x: 122, y: 200, width: 20, height: 20, speed: 0, lane: 8, direction: -1, laneSwitchCooldownMs: 0 });
-  game.step(200, { left: true, right: false }); // player moves to lane 4, andy lane attempts to move right (blocked by bounds rule fallback)
+  game.step(200, { left: true, right: false }); // player moves to lane 4, andy pursues by one lane step
   const andy = game.snapshot().entities.find((entity) => entity.type === 'andy');
   assert.ok(andy);
-  assert.equal(andy.lane, 8);
+  assert.equal(andy.lane, 7);
 
   game.forceSpawn({ type: 'skier', x: 122, y: 230, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 0 });
   game.forceSpawn({ type: 'tree', x: 122, y: 231, width: 20, height: 20, speed: 0, lane: 6 });
@@ -429,6 +531,7 @@ test('jumping clears jump-rule obstacles and rare/super-rare cadence spawns expe
   assert.equal(game.snapshot().lives, 3);
 
   game.step(700, { left: false, right: false, jump: false });
+  game.playerImmortalMs = 0;
   game.forceSpawn({ type: 'rock', obstacleTier: 'super-rare', jumpRule: 'high', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false, jump: false });
   assert.equal(game.snapshot().lives, 2);
@@ -565,6 +668,40 @@ test('jumping player renders in front of obstacles', () => {
 
   const treeBodyIndex = calls.findIndex((entry) => entry[0] === 13 && entry[1] === 10 && entry[2] === 14 && entry[3] === 18);
   const playerBodyIndex = calls.findIndex((entry) => entry[0] === 105 && entry[1] === 299 && entry[2] === 12 && entry[3] === 12);
+
+  assert.ok(treeBodyIndex >= 0);
+  assert.ok(playerBodyIndex >= 0);
+  assert.ok(playerBodyIndex > treeBodyIndex);
+});
+
+test('grounded player renders in front of obstacles', () => {
+  const calls = [];
+  const ctx = {
+    fillStyle: '#000',
+    font: '16px monospace',
+    fillRect: (...args) => calls.push(args),
+    fillText: () => {}
+  };
+  const renderer = new PixelRenderer(ctx, 360, 640);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 0,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [
+      { type: 'tree', x: 10, y: 10, width: 20, height: 20, speed: 0 }
+    ],
+    effects: []
+  });
+
+  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 13 && entry[1] === 10 && entry[2] === 14 && entry[3] === 18);
+  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 105 && entry[1] === 310 && entry[2] === 12 && entry[3] === 14);
 
   assert.ok(treeBodyIndex >= 0);
   assert.ok(playerBodyIndex >= 0);

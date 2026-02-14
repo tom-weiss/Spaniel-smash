@@ -76,9 +76,32 @@
         text-align: center;
         padding: 14px;
       }
-      #splash-image {
-        width: 110px;
+      .splash-roster {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 12px;
+      }
+      .splash-character {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        gap: 6px;
+      }
+      .splash-character img {
+        width: 58px;
+        height: 58px;
         image-rendering: pixelated;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        background: #0b1220;
+        padding: 4px;
+        box-sizing: border-box;
+      }
+      .splash-character figcaption {
+        font-family: monospace;
+        font-size: 10px;
+        color: #cbd5e1;
       }
       .splash h1 {
         font-size: 18px;
@@ -161,9 +184,22 @@
       </div>
       <div id="splash-screen" class="splash">
         <div class="splash-panel">
-          <img id="splash-image" alt="Pixel art spaniel" />
+          <div class="splash-roster" aria-label="Characters">
+            <figure class="splash-character">
+              <img src="docs/images/obstacles/player.svg" alt="Player character" />
+              <figcaption>PLAYER</figcaption>
+            </figure>
+            <figure class="splash-character">
+              <img src="docs/images/obstacles/spaniel.svg" alt="Spaniel character" />
+              <figcaption>SPANIEL</figcaption>
+            </figure>
+            <figure class="splash-character">
+              <img src="docs/images/obstacles/andy.svg" alt="Andy boss character" />
+              <figcaption>ANDY</figcaption>
+            </figure>
+          </div>
           <h1 id="splash-title">SPANIEL SMASH</h1>
-          <p id="splash-copy">Arrow keys or tap controls to move and jump. Smash spaniels, dodge trees, rocks, skiers, and Andy.</p>
+          <p id="splash-copy">Arrow keys or tap controls to move and jump. Smash spaniels, then take down Andy in the boss phase.</p>
           <label class="mute-toggle" for="splash-mute-toggle">
             <input id="splash-mute-toggle" type="checkbox" />
             Mute sound

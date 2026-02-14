@@ -7,7 +7,6 @@ const STANDARD_OBSTACLES = [
     { type: "skier", obstacleId: "rolling-skateboard", jumpRule: "low", widthScale: 0.56, height: 28, speed: 1.6, moving: true },
     { type: "skier", obstacleId: "jogger-crossing", jumpRule: "none", widthScale: 0.56, height: 30, speed: 1.4, moving: true },
     { type: "spaniel", obstacleId: "bouncing-ball", jumpRule: "low", widthScale: 0.45, height: 18, speed: 1.7, moving: true },
-    { type: "andy", obstacleId: "delivery-cart-drift", jumpRule: "high", widthScale: 0.68, height: 34, speed: 1.0, moving: true },
     { type: "spaniel", obstacleId: "squirrel-zigzag", jumpRule: "none", widthScale: 0.5, height: 22, speed: 1.8, moving: true }
 ];
 const RARE_OBSTACLES = [
@@ -16,31 +15,22 @@ const RARE_OBSTACLES = [
     { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false },
     { type: "skier", obstacleId: "fallen-signboard", jumpRule: "high", widthScale: 0.62, height: 30, speed: 1.5, moving: true },
     { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false },
-    { type: "andy", obstacleId: "street-sweeper-pass", jumpRule: "high", widthScale: 0.72, height: 34, speed: 1.4, moving: true },
     { type: "drone-package-drop", obstacleId: "drone-package-drop", jumpRule: "low", widthScale: 0.54, height: 24, speed: 2.1, moving: false },
     { type: "spaniel", obstacleId: "leashed-dog-lunge", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.7, moving: true },
-    { type: "skier", obstacleId: "scooter-rider", jumpRule: "none", widthScale: 0.58, height: 32, speed: 2.0, moving: true },
-    { type: "andy", obstacleId: "crow-flock-sweep", jumpRule: "high", widthScale: 0.7, height: 30, speed: 1.7, moving: true }
+    { type: "skier", obstacleId: "scooter-rider", jumpRule: "none", widthScale: 0.58, height: 32, speed: 2.0, moving: true }
 ];
 const SUPER_RARE_OBSTACLES = [
     { type: "tree", obstacleId: "collapsed-scaffolding", jumpRule: "high", widthScale: 0.75, height: 40, speed: 2.5, moving: false },
     { type: "rock", obstacleId: "roadwork-trench", jumpRule: "high", widthScale: 0.76, height: 40, speed: 2.45, moving: false },
-    { type: "andy", obstacleId: "power-line-arc-zone", jumpRule: "high", widthScale: 0.72, height: 34, speed: 1.4, moving: true },
     { type: "tree", obstacleId: "blocked-intersection", jumpRule: "none", widthScale: 0.8, height: 38, speed: 2.3, moving: false },
     { type: "rock", obstacleId: "statue-base-rubble", jumpRule: "high", widthScale: 0.72, height: 34, speed: 2.4, moving: false },
-    { type: "andy", obstacleId: "runaway-parade-float", jumpRule: "high", widthScale: 0.8, height: 36, speed: 1.2, moving: true },
-    { type: "andy", obstacleId: "garbage-truck-reverse-event", jumpRule: "high", widthScale: 0.74, height: 34, speed: 1.5, moving: true },
-    { type: "helicopter-downdraft", obstacleId: "helicopter-downdraft", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.8, moving: true },
-    { type: "andy", obstacleId: "mini-boss-bulldog", jumpRule: "high", widthScale: 0.7, height: 34, speed: 1.5, moving: true },
-    { type: "andy", obstacleId: "train-crossing-burst", jumpRule: "high", widthScale: 0.8, height: 34, speed: 2.0, moving: true }
+    { type: "helicopter-downdraft", obstacleId: "helicopter-downdraft", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.8, moving: true }
 ];
 const MYTHIC_OBSTACLES = [
     { type: "skier", obstacleId: "mirror-maze-gate", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.7, moving: true },
     { type: "spaniel", obstacleId: "frozen-street-tile-set", jumpRule: "low", widthScale: 0.6, height: 20, speed: 1.6, moving: true },
     { type: "tree", obstacleId: "ancient-bell-tower-debris", jumpRule: "high", widthScale: 0.7, height: 36, speed: 2.4, moving: false },
-    { type: "rock", obstacleId: "meteor-shard-rain", jumpRule: "high", widthScale: 0.66, height: 30, speed: 2.4, moving: false },
-    { type: "andy", obstacleId: "shadow-doppelganger", jumpRule: "none", widthScale: 0.68, height: 32, speed: 1.8, moving: true },
-    { type: "andy", obstacleId: "festival-dragon-sweep", jumpRule: "high", widthScale: 0.8, height: 36, speed: 1.7, moving: true }
+    { type: "rock", obstacleId: "meteor-shard-rain", jumpRule: "high", widthScale: 0.66, height: 30, speed: 2.4, moving: false }
 ];
 export class SpanielSmashGame {
     width;
@@ -52,8 +42,9 @@ export class SpanielSmashGame {
     score = 0;
     speedLevel = 1;
     spanielsSmashed = 0;
+    levelSpanielsSmashed = 0;
     gameOver = false;
-    witchAttackActive = false;
+    andyBossActive = false;
     entities = [];
     effects = [];
     rng;
@@ -72,6 +63,12 @@ export class SpanielSmashGame {
     mythicUnlocked = false;
     puddleSlowMs = 0;
     wetPaintSlipMs = 0;
+    playerImmortalMs = 0;
+    levelUpBannerMs = 0;
+    levelTransitionBoostMs = 0;
+    nextBossSpanielGoal = 12;
+    nextEntityId = 1;
+    touchingSurfaceEntityIds = new Set();
     static staticObstacleSpeed = 2.2;
     static movingEntityBaseSpeed = 1.2;
     static jumpDurationMs = 520;
@@ -79,6 +76,27 @@ export class SpanielSmashGame {
     static icePatchBoostDurationMs = 1400;
     static droneTelegraphDurationMs = 650;
     static downdraftPushIntervalMs = 180;
+    static andyBossEnterY = 58;
+    static andyBossHoverDurationMs = 20000;
+    static andyBossEnterSpeed = 2.05;
+    static andyBossExitSpeed = 1.95;
+    static andyBossLaneMoveMs = 240;
+    static andyBossThrowMinMs = 820;
+    static andyBossThrowMaxMs = 1500;
+    static andyBossBonusScore = 1800;
+    static levelStartImmortalMs = 2600;
+    static respawnImmortalMs = 2200;
+    static levelUpBannerDurationMs = 1400;
+    static levelTransitionBoostDurationMs = 3800;
+    static levelTransitionSpawnIntervalMs = 300;
+    static baseSpawnIntervalMs = 450;
+    static levelTransitionScrollMultiplier = 1.2;
+    static pooBagSpeed = 2.8;
+    static pooBagWidthScale = 0.34;
+    static pooBagHeight = 16;
+    static maxPuddleStackMs = 5400;
+    static maxIceStackMs = 5600;
+    static maxEffectStacks = 4;
     static defaultLaneSwitchCooldownMs = 140;
     static defaultJumpCooldownMs = 560;
     static puddleLaneSwitchCooldownMs = 280;
@@ -97,21 +115,23 @@ export class SpanielSmashGame {
         this.nextRareSpawnMs = this.rollRareSpawnMs();
         this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
         this.nextMythicSpawnMs = this.rollMythicSpawnMs();
+        this.playerImmortalMs = SpanielSmashGame.levelStartImmortalMs;
     }
     step(deltaMs, input) {
         if (this.gameOver) {
             return;
         }
         this.tickEffects(deltaMs);
-        this.tickPlayerEffectTimers(deltaMs);
+        this.tickRuntimeTimers(deltaMs);
         if (this.crashFreezeMs > 0) {
             this.crashFreezeMs = Math.max(0, this.crashFreezeMs - deltaMs);
             return;
         }
         this.handleInput(input, deltaMs);
         this.spawnClock += deltaMs;
-        if (this.spawnClock >= 450) {
-            this.spawnClock = 0;
+        const spawnIntervalMs = this.currentSpawnIntervalMs();
+        while (this.spawnClock >= spawnIntervalMs) {
+            this.spawnClock -= spawnIntervalMs;
             this.spawnEntity();
         }
         const speedMultiplier = (1 + (this.speedLevel - 1) * 0.2) * this.currentScrollSpeedMultiplier();
@@ -126,6 +146,8 @@ export class SpanielSmashGame {
         this.applyDowndraftPushes();
         this.resolveEntityCollisions();
         this.resolveCollisions();
+        this.maybeStartBossEncounter();
+        this.handleBossExitState();
         this.entities = this.entities.filter((entity) => entity.y < this.height + 40 && entity.y + entity.height > -40);
     }
     handleInput(input, deltaMs) {
@@ -151,44 +173,48 @@ export class SpanielSmashGame {
         }
     }
     currentControlProfile() {
-        if (this.puddleSlowMs > 0) {
-            return {
-                laneSwitchCooldownMs: SpanielSmashGame.puddleLaneSwitchCooldownMs,
-                jumpCooldownMs: SpanielSmashGame.puddleJumpCooldownMs
-            };
-        }
-        if (this.wetPaintSlipMs > 0) {
-            return {
-                laneSwitchCooldownMs: SpanielSmashGame.iceLaneSwitchCooldownMs,
-                jumpCooldownMs: SpanielSmashGame.iceJumpCooldownMs
-            };
-        }
+        const puddleStacks = this.effectStacks(this.puddleSlowMs, SpanielSmashGame.puddleSlowDurationMs);
+        const iceStacks = this.effectStacks(this.wetPaintSlipMs, SpanielSmashGame.icePatchBoostDurationMs);
+        const laneCooldown = SpanielSmashGame.defaultLaneSwitchCooldownMs
+            + puddleStacks * (SpanielSmashGame.puddleLaneSwitchCooldownMs - SpanielSmashGame.defaultLaneSwitchCooldownMs)
+            - iceStacks * (SpanielSmashGame.defaultLaneSwitchCooldownMs - SpanielSmashGame.iceLaneSwitchCooldownMs);
+        const jumpCooldown = SpanielSmashGame.defaultJumpCooldownMs
+            + puddleStacks * (SpanielSmashGame.puddleJumpCooldownMs - SpanielSmashGame.defaultJumpCooldownMs)
+            - iceStacks * (SpanielSmashGame.defaultJumpCooldownMs - SpanielSmashGame.iceJumpCooldownMs);
         return {
-            laneSwitchCooldownMs: SpanielSmashGame.defaultLaneSwitchCooldownMs,
-            jumpCooldownMs: SpanielSmashGame.defaultJumpCooldownMs
+            laneSwitchCooldownMs: Math.max(40, Math.min(520, Math.round(laneCooldown))),
+            jumpCooldownMs: Math.max(180, Math.min(1600, Math.round(jumpCooldown)))
         };
     }
     currentScrollSpeedMultiplier() {
-        if (this.puddleSlowMs > 0) {
-            return SpanielSmashGame.puddleScrollSpeedMultiplier;
+        const puddleStacks = this.effectStacks(this.puddleSlowMs, SpanielSmashGame.puddleSlowDurationMs);
+        const iceStacks = this.effectStacks(this.wetPaintSlipMs, SpanielSmashGame.icePatchBoostDurationMs);
+        const levelTransition = this.levelTransitionBoostMs > 0 ? SpanielSmashGame.levelTransitionScrollMultiplier : 1;
+        const effectSpeed = Math.pow(SpanielSmashGame.puddleScrollSpeedMultiplier, puddleStacks)
+            * Math.pow(SpanielSmashGame.iceScrollSpeedMultiplier, iceStacks);
+        return Math.max(0.35, Math.min(2.5, levelTransition * effectSpeed));
+    }
+    currentSpawnIntervalMs() {
+        if (this.levelTransitionBoostMs > 0) {
+            return SpanielSmashGame.levelTransitionSpawnIntervalMs;
         }
-        if (this.wetPaintSlipMs > 0) {
-            return SpanielSmashGame.iceScrollSpeedMultiplier;
+        return SpanielSmashGame.baseSpawnIntervalMs;
+    }
+    effectStacks(ms, durationMs) {
+        if (ms <= 0) {
+            return 0;
         }
-        return 1;
+        return Math.min(SpanielSmashGame.maxEffectStacks, Math.ceil(ms / durationMs));
     }
     spawnEntity() {
         const spawnLane = this.pickSpawnLane();
         const spawnX = this.laneX(spawnLane);
         const movingDirection = this.rng() < 0.5 ? 1 : -1;
         const movingSpawnY = movingDirection === 1 ? -26 : this.height + 26;
-        if (this.witchAttackActive && !this.entities.some((entity) => entity.type === "andy")) {
-            this.entities.push(this.makeEntityFromTemplate({ type: "andy", obstacleId: "mini-boss-bulldog", jumpRule: "high", widthScale: 0.56, height: 32, speed: SpanielSmashGame.movingEntityBaseSpeed, moving: true }, "super-rare", spawnLane, spawnX, movingDirection, movingSpawnY));
-            return;
-        }
-        this.rareSpawnClock += 450;
-        this.superRareSpawnClock += 450;
-        this.mythicSpawnClock += 450;
+        const cadenceTickMs = this.currentSpawnIntervalMs();
+        this.rareSpawnClock += cadenceTickMs;
+        this.superRareSpawnClock += cadenceTickMs;
+        this.mythicSpawnClock += cadenceTickMs;
         if (this.mythicUnlocked && this.mythicSpawnClock >= this.nextMythicSpawnMs) {
             this.mythicSpawnClock = 0;
             this.nextMythicSpawnMs = this.rollMythicSpawnMs();
@@ -221,6 +247,7 @@ export class SpanielSmashGame {
         const isMoving = template.moving && !isLanePatch && !isDroneTelegraph;
         const speedVariance = isMoving ? this.rng() * 0.35 : 0;
         return {
+            id: this.nextEntityId++,
             type: template.type,
             obstacleId: template.obstacleId,
             obstacleTier: tier,
@@ -246,12 +273,96 @@ export class SpanielSmashGame {
         }
         return undefined;
     }
+    spawnAndyBoss() {
+        const spawnLane = this.minPlayableLane() + Math.floor(this.rng() * (this.maxPlayableLane() - this.minPlayableLane() + 1));
+        this.entities.push({
+            id: this.nextEntityId++,
+            type: "andy",
+            obstacleId: "andy-boss",
+            obstacleTier: "super-rare",
+            jumpRule: "high",
+            behaviorState: {
+                kind: "andyBoss",
+                phase: "entering",
+                phaseMs: 0,
+                throwCooldownMs: this.rollAndyThrowCooldownMs()
+            },
+            x: this.laneX(spawnLane),
+            y: -52,
+            width: this.laneWidth * 0.8,
+            height: 34,
+            speed: SpanielSmashGame.movingEntityBaseSpeed,
+            lane: spawnLane,
+            laneSwitchCooldownMs: 0,
+            direction: 1,
+            crashAnimationMs: 0
+        });
+        this.andyBossActive = true;
+    }
+    maybeStartBossEncounter() {
+        if (this.andyBossActive) {
+            return;
+        }
+        if (this.levelSpanielsSmashed < this.nextBossSpanielGoal) {
+            return;
+        }
+        this.spawnAndyBoss();
+    }
+    handleBossExitState() {
+        if (this.andyBossActive) {
+            return;
+        }
+        if (this.entities.some((entity) => entity.type === "poo-bag" || (entity.type === "andy" && entity.behaviorState?.kind === "andyBoss"))) {
+            this.entities = this.entities.filter((entity) => entity.type !== "poo-bag" && !(entity.type === "andy" && entity.behaviorState?.kind === "andyBoss"));
+        }
+    }
+    completeBossEncounter(defeated) {
+        if (!this.andyBossActive) {
+            return;
+        }
+        this.andyBossActive = false;
+        if (defeated) {
+            this.score += SpanielSmashGame.andyBossBonusScore;
+        }
+        this.speedLevel += 1;
+        this.levelSpanielsSmashed = 0;
+        this.nextBossSpanielGoal = 10 + ((this.speedLevel - 1) % 6);
+        this.levelUpBannerMs = SpanielSmashGame.levelUpBannerDurationMs;
+        this.levelTransitionBoostMs = SpanielSmashGame.levelTransitionBoostDurationMs;
+        this.playerImmortalMs = Math.max(this.playerImmortalMs, SpanielSmashGame.levelStartImmortalMs);
+        this.spawnClock = Math.min(this.spawnClock, this.currentSpawnIntervalMs() - 1);
+    }
+    spawnAndyPooBag(andy) {
+        const lane = this.playerLane;
+        this.entities.push({
+            id: this.nextEntityId++,
+            type: "poo-bag",
+            obstacleId: "andy-poo-bag",
+            jumpRule: "none",
+            x: this.laneX(lane),
+            y: andy.y + andy.height - 2,
+            width: this.laneWidth * SpanielSmashGame.pooBagWidthScale,
+            height: SpanielSmashGame.pooBagHeight,
+            speed: SpanielSmashGame.pooBagSpeed,
+            lane,
+            laneSwitchCooldownMs: 0,
+            direction: 1,
+            crashAnimationMs: 0
+        });
+    }
     rollRareSpawnMs() { return 10000 + Math.floor(this.rng() * 10001); }
     rollSuperRareSpawnMs() { return 60000 + Math.floor(this.rng() * 540001); }
     rollMythicSpawnMs() { return 30000 + Math.floor(this.rng() * 60001); }
-    tickPlayerEffectTimers(deltaMs) {
+    rollAndyThrowCooldownMs() {
+        const span = SpanielSmashGame.andyBossThrowMaxMs - SpanielSmashGame.andyBossThrowMinMs;
+        return SpanielSmashGame.andyBossThrowMinMs + Math.floor(this.rng() * (span + 1));
+    }
+    tickRuntimeTimers(deltaMs) {
         this.puddleSlowMs = Math.max(0, this.puddleSlowMs - deltaMs);
         this.wetPaintSlipMs = Math.max(0, this.wetPaintSlipMs - deltaMs);
+        this.playerImmortalMs = Math.max(0, this.playerImmortalMs - deltaMs);
+        this.levelUpBannerMs = Math.max(0, this.levelUpBannerMs - deltaMs);
+        this.levelTransitionBoostMs = Math.max(0, this.levelTransitionBoostMs - deltaMs);
     }
     tickEntityBehaviorState(entity, deltaMs) {
         const behavior = entity.behaviorState;
@@ -270,6 +381,41 @@ export class SpanielSmashGame {
         }
         if (behavior.kind === "downdraft") {
             behavior.pushCooldownMs = Math.max(0, behavior.pushCooldownMs - deltaMs);
+            return;
+        }
+        if (behavior.kind === "andyBoss") {
+            const travelUnit = deltaMs / 16.67;
+            behavior.throwCooldownMs = Math.max(0, behavior.throwCooldownMs - deltaMs);
+            if (behavior.phase === "entering") {
+                entity.speed = 0;
+                entity.y += SpanielSmashGame.andyBossEnterSpeed * travelUnit;
+                if (entity.y >= SpanielSmashGame.andyBossEnterY) {
+                    entity.y = SpanielSmashGame.andyBossEnterY;
+                    behavior.phase = "hovering";
+                    behavior.phaseMs = SpanielSmashGame.andyBossHoverDurationMs;
+                    behavior.throwCooldownMs = this.rollAndyThrowCooldownMs();
+                }
+                return;
+            }
+            if (behavior.phase === "hovering") {
+                entity.speed = 0;
+                behavior.phaseMs = Math.max(0, behavior.phaseMs - deltaMs);
+                if (behavior.throwCooldownMs === 0) {
+                    this.spawnAndyPooBag(entity);
+                    behavior.throwCooldownMs = this.rollAndyThrowCooldownMs();
+                }
+                if (behavior.phaseMs === 0) {
+                    behavior.phase = "exiting";
+                    entity.speed = SpanielSmashGame.andyBossExitSpeed;
+                    entity.direction = 1;
+                }
+                return;
+            }
+            entity.speed = SpanielSmashGame.andyBossExitSpeed;
+            entity.direction = 1;
+            if (entity.y > this.height + 42) {
+                this.completeBossEncounter(false);
+            }
         }
     }
     applyDowndraftPushes() {
@@ -308,6 +454,7 @@ export class SpanielSmashGame {
     resolveCollisions() {
         const player = this.playerCollisionBounds();
         const survivors = [];
+        const nextTouchingSurfaceEntityIds = new Set();
         for (const entity of this.entities) {
             if (entity.type === "bloodstain") {
                 survivors.push(entity);
@@ -318,12 +465,24 @@ export class SpanielSmashGame {
                 continue;
             }
             if (entity.type === "puddle-patch") {
-                this.puddleSlowMs = SpanielSmashGame.puddleSlowDurationMs;
+                const id = entity.id ?? -1;
+                if (id >= 0) {
+                    nextTouchingSurfaceEntityIds.add(id);
+                }
+                if (id < 0 || !this.touchingSurfaceEntityIds.has(id)) {
+                    this.puddleSlowMs = Math.min(SpanielSmashGame.maxPuddleStackMs, this.puddleSlowMs + SpanielSmashGame.puddleSlowDurationMs);
+                }
                 survivors.push(entity);
                 continue;
             }
             if (entity.type === "ice-patch") {
-                this.wetPaintSlipMs = SpanielSmashGame.icePatchBoostDurationMs;
+                const id = entity.id ?? -1;
+                if (id >= 0) {
+                    nextTouchingSurfaceEntityIds.add(id);
+                }
+                if (id < 0 || !this.touchingSurfaceEntityIds.has(id)) {
+                    this.wetPaintSlipMs = Math.min(SpanielSmashGame.maxIceStackMs, this.wetPaintSlipMs + SpanielSmashGame.icePatchBoostDurationMs);
+                }
                 survivors.push(entity);
                 continue;
             }
@@ -337,27 +496,48 @@ export class SpanielSmashGame {
                 this.spawnBloodstain(entity);
                 this.score += 100;
                 this.spanielsSmashed += 1;
+                this.levelSpanielsSmashed += 1;
                 this.mythicUnlocked = this.mythicUnlocked || this.spanielsSmashed >= 25;
-                if (this.spanielsSmashed % 10 === 0) {
-                    this.witchAttackActive = true;
-                    this.speedLevel += 1;
-                }
+                continue;
+            }
+            if (entity.type === "andy" && entity.behaviorState?.kind === "andyBoss" && this.canClearByJump(entity)) {
+                this.spawnSmashEffect(entity.x, entity.y, "spaniel-smash");
+                this.spawnSmashEffect(entity.x, entity.y, "coin-pop");
+                this.completeBossEncounter(true);
+                continue;
+            }
+            if (entity.type === "poo-bag") {
+                this.spawnSmashEffect(entity.x, entity.y, "poo-splat");
+                this.damagePlayer();
                 continue;
             }
             if (this.canClearByJump(entity)) {
                 survivors.push(entity);
                 continue;
             }
-            this.lives -= 1;
-            this.crashFreezeMs = 650;
-            if (entity.type === "andy") {
-                this.witchAttackActive = false;
+            if (this.playerImmortalMs > 0) {
+                survivors.push(entity);
+                continue;
             }
-            if (this.lives <= 0) {
-                this.gameOver = true;
+            this.damagePlayer();
+            if (entity.type === "andy") {
+                survivors.push(entity);
             }
         }
+        this.touchingSurfaceEntityIds = nextTouchingSurfaceEntityIds;
         this.entities = survivors;
+    }
+    damagePlayer() {
+        if (this.playerImmortalMs > 0) {
+            return;
+        }
+        this.lives -= 1;
+        this.crashFreezeMs = 650;
+        if (this.lives <= 0) {
+            this.gameOver = true;
+            return;
+        }
+        this.playerImmortalMs = SpanielSmashGame.respawnImmortalMs;
     }
     playerCollisionBounds() {
         const x = this.playerX();
@@ -381,6 +561,14 @@ export class SpanielSmashGame {
                 height: bounds.height * 0.58
             };
         }
+        if (entity.type === "poo-bag") {
+            return {
+                x: bounds.x + bounds.width * 0.18,
+                y: bounds.y + bounds.height * 0.18,
+                width: bounds.width * 0.64,
+                height: bounds.height * 0.64
+            };
+        }
         if (entity.type === "tree") {
             return {
                 x: bounds.x + bounds.width * 0.06,
@@ -397,6 +585,9 @@ export class SpanielSmashGame {
             for (let j = i + 1; j < this.entities.length; j += 1) {
                 const first = this.entities[i];
                 const second = this.entities[j];
+                if (first.type === "andy" || second.type === "andy" || first.type === "poo-bag" || second.type === "poo-bag" || first.type === "bloodstain" || second.type === "bloodstain") {
+                    continue;
+                }
                 if (!intersects(first, second)) {
                     continue;
                 }
@@ -413,6 +604,7 @@ export class SpanielSmashGame {
             this.spawnSmashEffect(entity.x, entity.y, entity.type === "spaniel" ? "spaniel-smash" : "obstacle-crash");
             this.entities[index] = {
                 ...entity,
+                id: this.nextEntityId++,
                 type: "bloodstain",
                 obstacleId: undefined,
                 obstacleTier: undefined,
@@ -428,10 +620,10 @@ export class SpanielSmashGame {
             };
         }
     }
-    isMovingObstacle(entity) { return entity.type === "skier" || entity.type === "spaniel" || entity.type === "andy" || entity.type === "helicopter-downdraft"; }
+    isMovingObstacle(entity) { return entity.type === "skier" || entity.type === "spaniel" || entity.type === "helicopter-downdraft"; }
     spawnSmashEffect(x, y, kind) { this.effects.push({ kind, x, y, ttlMs: 300, maxTtlMs: 300 }); }
     spawnBloodstain(entity) {
-        this.entities.push({ type: "bloodstain", x: this.laneX(this.entityLane(entity)), y: entity.y + entity.height + 4, width: this.laneWidth * 0.55, height: 18, speed: SpanielSmashGame.staticObstacleSpeed, lane: this.entityLane(entity), laneSwitchCooldownMs: 0, direction: 1, crashAnimationMs: 0 });
+        this.entities.push({ id: this.nextEntityId++, type: "bloodstain", x: this.laneX(this.entityLane(entity)), y: entity.y + entity.height + 4, width: this.laneWidth * 0.55, height: 18, speed: SpanielSmashGame.staticObstacleSpeed, lane: this.entityLane(entity), laneSwitchCooldownMs: 0, direction: 1, crashAnimationMs: 0 });
     }
     tickEffects(deltaMs) {
         this.effects = this.effects.map((effect) => {
@@ -447,6 +639,7 @@ export class SpanielSmashGame {
         if (!entity.behaviorState) {
             entity.behaviorState = this.createBehaviorState(entity.type, entity.direction ?? 1);
         }
+        entity.id ??= this.nextEntityId++;
         entity.lane = this.entityLane(entity);
         entity.x = this.laneX(entity.lane);
         entity.laneSwitchCooldownMs ??= 0;
@@ -460,8 +653,9 @@ export class SpanielSmashGame {
         this.score = 0;
         this.speedLevel = 1;
         this.spanielsSmashed = 0;
+        this.levelSpanielsSmashed = 0;
         this.gameOver = false;
-        this.witchAttackActive = false;
+        this.andyBossActive = false;
         this.entities = [];
         this.effects = [];
         this.spawnClock = 0;
@@ -479,6 +673,12 @@ export class SpanielSmashGame {
         this.mythicUnlocked = false;
         this.puddleSlowMs = 0;
         this.wetPaintSlipMs = 0;
+        this.playerImmortalMs = SpanielSmashGame.levelStartImmortalMs;
+        this.levelUpBannerMs = 0;
+        this.levelTransitionBoostMs = 0;
+        this.nextBossSpanielGoal = 12;
+        this.nextEntityId = 1;
+        this.touchingSurfaceEntityIds = new Set();
     }
     snapshot() {
         return {
@@ -486,11 +686,16 @@ export class SpanielSmashGame {
             score: this.score,
             speedLevel: this.speedLevel,
             spanielsSmashed: this.spanielsSmashed,
+            levelSpanielsSmashed: this.levelSpanielsSmashed,
+            nextBossSpanielGoal: this.nextBossSpanielGoal,
             isGameOver: this.gameOver,
             playerX: this.playerX(),
             playerY: this.playerY(),
             playerJumpOffset: this.playerJumpOffset(),
+            isPlayerImmortal: this.playerImmortalMs > 0,
             isCrashActive: this.crashFreezeMs > 0,
+            isBossActive: this.andyBossActive,
+            levelUpBannerMs: this.levelUpBannerMs,
             sideObstacleOffsetY: this.sideObstacleOffsetY,
             activeEffects: {
                 puddleSlowMs: this.puddleSlowMs,
@@ -530,12 +735,22 @@ export class SpanielSmashGame {
             return;
         }
         let targetLane = currentLane;
+        if (entity.type === "andy" && entity.behaviorState?.kind === "andyBoss") {
+            if (entity.behaviorState.phase === "hovering" || entity.behaviorState.phase === "exiting") {
+                if (currentLane < this.playerLane)
+                    targetLane = currentLane + 1;
+                else if (currentLane > this.playerLane)
+                    targetLane = currentLane - 1;
+            }
+            entity.lane = Math.max(this.minPlayableLane(), Math.min(this.maxPlayableLane(), targetLane));
+            entity.laneSwitchCooldownMs = SpanielSmashGame.andyBossLaneMoveMs;
+            return;
+        }
         if (entity.type === "andy") {
-            const laneStep = entity.direction === -1 ? -1 : 1;
             if (currentLane < this.playerLane)
-                targetLane = currentLane + laneStep;
+                targetLane = currentLane + 1;
             else if (currentLane > this.playerLane)
-                targetLane = currentLane - laneStep;
+                targetLane = currentLane - 1;
         }
         else if (this.rng() < 0.3) {
             targetLane = currentLane + (this.rng() < 0.5 ? -1 : 1);
@@ -594,12 +809,6 @@ export class PixelRenderer {
         this.ctx.fillRect(20, 0, this.width - 40, this.height);
         this.drawSlopeEdges(snapshot.sideObstacleOffsetY);
         const isJumping = !snapshot.isCrashActive && snapshot.playerJumpOffset > 0;
-        if (snapshot.isCrashActive) {
-            drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
-        }
-        else if (!isJumping) {
-            drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
-        }
         if (isJumping) {
             drawJumpShadow(this.ctx, snapshot.playerX, snapshot.playerY, snapshot.playerJumpOffset);
         }
@@ -626,6 +835,9 @@ export class PixelRenderer {
                     drawDowndraftZone(this.ctx, entity.x, entity.y, 1);
                 }
             }
+            else if (entity.type === "poo-bag") {
+                drawPooBag(this.ctx, entity.x, entity.y);
+            }
             else if (entity.type === "tree")
                 drawTree(this.ctx, entity.x, entity.y);
             else if (entity.type === "rock") {
@@ -640,9 +852,12 @@ export class PixelRenderer {
             else if (entity.type === "bloodstain")
                 drawBloodstain(this.ctx, entity.x, entity.y);
             else
-                drawWitch(this.ctx, entity.x, entity.y);
+                drawAndy(this.ctx, entity.x, entity.y);
         }
-        if (isJumping) {
+        if (snapshot.isCrashActive) {
+            drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
+        }
+        else {
             drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
         }
         for (const effect of snapshot.effects)
@@ -656,6 +871,12 @@ export class PixelRenderer {
             this.ctx.fillText("CRASHED!", this.width / 2 - 42, 100);
             this.ctx.fillStyle = "#f8fafc";
             this.ctx.fillText(`Lives Left ${snapshot.lives}`, this.width / 2 - 72, 120);
+        }
+        if ((snapshot.levelUpBannerMs ?? 0) > 0 && !snapshot.isGameOver) {
+            this.ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+            this.ctx.fillRect(this.width / 2 - 112, 136, 224, 34);
+            this.ctx.fillStyle = "#86efac";
+            this.ctx.fillText(`LEVEL ${snapshot.speedLevel}!`, this.width / 2 - 66, 158);
         }
         if (snapshot.isGameOver) {
             this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
@@ -746,6 +967,14 @@ function drawDroneCrate(ctx, x, y) {
     ctx.fillRect(x + 9, y + 7, 2, 12);
     ctx.fillRect(x + 4, y + 12, 14, 2);
 }
+function drawPooBag(ctx, x, y) {
+    ctx.fillStyle = "#166534";
+    ctx.fillRect(x + 5, y + 6, 10, 8);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(x + 6, y + 7, 8, 6);
+    ctx.fillStyle = "#14532d";
+    ctx.fillRect(x + 9, y + 4, 2, 2);
+}
 function drawSkier(ctx, x, y, bodyColor, helmetColor, jumpOffset = 0) {
     const inAir = jumpOffset > 0;
     const bodyHeight = inAir ? 12 : 14;
@@ -773,7 +1002,7 @@ function drawDowndraftZone(ctx, x, y, pushDirection) {
     ctx.fillRect(gustX + (pushDirection === 1 ? 2 : -2), y + 12, 2, 6);
     ctx.fillRect(gustX + (pushDirection === 1 ? 4 : -4), y + 16, 2, 6);
 }
-function drawWitch(ctx, x, y) { ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 2, y + 17, 20, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 17, y + 16, 3, 3); }
+function drawAndy(ctx, x, y) { ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 1, y + 16, 22, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 18, y + 15, 3, 3); ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); }
 function drawCrashedSkier(ctx, x, y, bodyColor, helmetColor) { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
 function drawJumpShadow(ctx, x, y, jumpOffset) { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
 function drawSmashEffect(ctx, effect) {
@@ -788,7 +1017,7 @@ function drawSmashEffect(ctx, effect) {
     }
     const progress = 1 - effect.ttlMs / effect.maxTtlMs;
     const radius = Math.floor(progress * 10) + 2;
-    const color = effect.kind === "spaniel-smash" ? "#dc2626" : "#f97316";
+    const color = effect.kind === "spaniel-smash" ? "#dc2626" : effect.kind === "poo-splat" ? "#22c55e" : "#f97316";
     ctx.fillStyle = color;
     ctx.fillRect(effect.x + 8 - radius, effect.y + 8 - radius, radius, radius);
     ctx.fillRect(effect.x + 8 + radius / 2, effect.y + 5, radius, radius);
