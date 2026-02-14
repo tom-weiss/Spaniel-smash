@@ -41,6 +41,7 @@ window.addEventListener("keyup", (event) => {
 
 const leftControl = document.getElementById("control-left");
 const rightControl = document.getElementById("control-right");
+const restartControl = document.getElementById("control-restart");
 
 function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): void {
   if (!control) {
@@ -67,6 +68,13 @@ function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): v
 bindTouchControl(leftControl, "left");
 bindTouchControl(rightControl, "right");
 
+if (restartControl) {
+  restartControl.addEventListener("click", () => {
+    game.restart();
+    dismissBanner();
+  });
+}
+
 window.addEventListener("keydown", dismissBanner, { once: true });
 window.addEventListener("pointerdown", dismissBanner, { once: true });
 
@@ -76,7 +84,13 @@ function frame(now: number): void {
   const delta = Math.min(33, now - lastFrame);
   lastFrame = now;
   game.step(delta, input);
-  renderer.render(game.snapshot());
+  const snapshot = game.snapshot();
+  renderer.render(snapshot);
+
+  if (restartControl) {
+    restartControl.toggleAttribute("hidden", !snapshot.isGameOver);
+  }
+
   requestAnimationFrame(frame);
 }
 
