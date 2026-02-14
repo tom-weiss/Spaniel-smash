@@ -239,6 +239,28 @@ test('snapshot returns copied entity data', () => {
   assert.notEqual(snap2.entities[0].x, 999);
 });
 
+test('side obstacle offset progresses with speed level and resets on restart', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+
+  game.step(16.67, { left: false, right: false });
+  const firstOffset = game.snapshot().sideObstacleOffsetY;
+  assert.ok(firstOffset > 2.1 && firstOffset < 2.3);
+
+  for (let i = 0; i < 10; i += 1) {
+    game.forceSpawn({ type: 'spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+    game.step(16, { left: false, right: false });
+    game.step(700, { left: false, right: false });
+  }
+
+  const beforeFastStep = game.snapshot().sideObstacleOffsetY;
+  game.step(16.67, { left: false, right: false });
+  const afterFastStep = game.snapshot().sideObstacleOffsetY;
+  assert.ok(afterFastStep - beforeFastStep > 2.6);
+
+  game.restart();
+  assert.equal(game.snapshot().sideObstacleOffsetY, 0);
+});
+
 
 test('andy already in player lane keeps current lane when moving', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.9]), 10);
@@ -307,6 +329,7 @@ test('pixel renderer paints all hud and game over layers', () => {
     playerX: 120,
     playerY: 366,
     isCrashActive: true,
+    sideObstacleOffsetY: 32,
     entities: [
       { type: 'tree', x: 10, y: 10, width: 20, height: 20, speed: 1 },
       { type: 'rock', x: 40, y: 40, width: 20, height: 20, speed: 1 },
@@ -321,6 +344,9 @@ test('pixel renderer paints all hud and game over layers', () => {
   assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Tap Restart below')));
   assert.ok(calls.some((entry) => entry[0] === 'fillRect'));
 
+  const edgeTreeAtOffset32 = calls.some((entry) => entry[0] === 'fillRect' && entry[1] === 5 && entry[2] === -38);
+  assert.equal(edgeTreeAtOffset32, true);
+
   renderer.render({
     lives: 3,
     score: 0,
@@ -330,6 +356,23 @@ test('pixel renderer paints all hud and game over layers', () => {
     playerX: 120,
     playerY: 366,
     isCrashActive: false,
+    sideObstacleOffsetY: 0,
     entities: []
   });
+
+  renderer.render({
+    lives: 2,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 120,
+    playerY: 366,
+    isCrashActive: true,
+    sideObstacleOffsetY: 0,
+    entities: []
+  });
+
+  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('CRASHED!')));
+  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Lives Left 2')));
 });

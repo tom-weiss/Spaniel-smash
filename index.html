@@ -69,12 +69,18 @@
         flex: 1;
         border: 2px solid #38bdf8;
         border-radius: 8px;
-        padding: 12px 10px;
+        padding: 10px;
         background: #1e293b;
         color: #e2e8f0;
-        font-family: monospace;
-        font-size: 16px;
         touch-action: manipulation;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .control svg {
+        width: 24px;
+        height: 24px;
+        fill: #e2e8f0;
       }
       @media (pointer: coarse) {
         .controls {
@@ -88,9 +94,15 @@
       <div id="startup-banner" class="startup-banner">Ready? Press any key or tap to start.</div>
       <canvas id="game" width="360" height="640"></canvas>
       <div class="controls" aria-label="Touch controls">
-        <button id="control-left" class="control" aria-label="Move left">⬅ Left</button>
-        <button id="control-right" class="control" aria-label="Move right">Right ➡</button>
-        <button id="control-restart" class="control" aria-label="Restart game" hidden>🔁 Restart</button>
+        <button id="control-left" class="control" aria-label="Move left">
+          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M15.4 4.6a1 1 0 0 1 0 1.4L10.41 11H20a1 1 0 1 1 0 2h-9.59l4.99 4.99a1 1 0 0 1-1.41 1.41l-6.7-6.69a1 1 0 0 1 0-1.42l6.7-6.69a1 1 0 0 1 1.41 0Z"/></svg>
+        </button>
+        <button id="control-right" class="control" aria-label="Move right">
+          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8.6 19.4a1 1 0 0 1 0-1.4L13.59 13H4a1 1 0 1 1 0-2h9.59L8.6 6.01A1 1 0 1 1 10.01 4.6l6.7 6.69a1 1 0 0 1 0 1.42l-6.7 6.69a1 1 0 0 1-1.41 0Z"/></svg>
+        </button>
+        <button id="control-restart" class="control" aria-label="Restart game" hidden>
+          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.93 8H3.5a1 1 0 1 1 0-2h3.25a1 1 0 0 1 1 1v3.25a1 1 0 1 1-2 0v-.88A5 5 0 1 0 12 7h-1.4a1 1 0 1 1 0-2H12Z"/></svg>
+        </button>
       </div>
       <p>Arrow keys move skier. Smash spaniels. Avoid obstacles + Andy.</p>
     </div>

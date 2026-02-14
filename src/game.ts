@@ -26,6 +26,7 @@ export interface GameSnapshot {
   playerX: number;
   playerY: number;
   isCrashActive: boolean;
+  sideObstacleOffsetY: number;
   entities: ReadonlyArray<Entity>;
 }
 
@@ -47,6 +48,7 @@ export class SpanielSmashGame {
   private spawnClock = 0;
   private laneSwitchCooldownMs = 0;
   private crashFreezeMs = 0;
+  private sideObstacleOffsetY = 0;
 
   private static readonly staticObstacleSpeed = 2.2;
   private static readonly movingEntityBaseSpeed = 1.2;
@@ -78,6 +80,7 @@ export class SpanielSmashGame {
     }
 
     const speedMultiplier = 1 + (this.speedLevel - 1) * 0.2;
+    this.sideObstacleOffsetY += SpanielSmashGame.staticObstacleSpeed * speedMultiplier * (deltaMs / 16.67);
     for (const entity of this.entities) {
       this.maybeMoveEntityLane(entity, deltaMs);
       entity.y += entity.speed * (entity.direction ?? 1) * speedMultiplier * (deltaMs / 16.67);
@@ -246,6 +249,7 @@ export class SpanielSmashGame {
     this.spawnClock = 0;
     this.laneSwitchCooldownMs = 0;
     this.crashFreezeMs = 0;
+    this.sideObstacleOffsetY = 0;
   }
 
   public snapshot(): GameSnapshot {
@@ -258,6 +262,7 @@ export class SpanielSmashGame {
       playerX: this.playerX(),
       playerY: this.playerY(),
       isCrashActive: this.crashFreezeMs > 0,
+      sideObstacleOffsetY: this.sideObstacleOffsetY,
       entities: this.entities.map((entity) => ({ ...entity }))
     };
   }
@@ -403,7 +408,7 @@ export class PixelRenderer {
     this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(20, 0, this.width - 40, this.height);
 
-    this.drawSlopeEdges();
+    this.drawSlopeEdges(snapshot.sideObstacleOffsetY);
 
     if (snapshot.isCrashActive) {
       drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
@@ -431,6 +436,15 @@ export class PixelRenderer {
     this.ctx.fillText(`Lives ${snapshot.lives}`, 14, 44);
     this.ctx.fillText(`Level ${snapshot.speedLevel}`, 14, 64);
 
+    if (snapshot.isCrashActive && !snapshot.isGameOver) {
+      this.ctx.fillStyle = "rgba(12, 18, 31, 0.9)";
+      this.ctx.fillRect(this.width / 2 - 120, 78, 240, 56);
+      this.ctx.fillStyle = "#ff6b6b";
+      this.ctx.fillText("CRASHED!", this.width / 2 - 42, 100);
+      this.ctx.fillStyle = "#f8fafc";
+      this.ctx.fillText(`Lives Left ${snapshot.lives}`, this.width / 2 - 72, 120);
+    }
+
     if (snapshot.isGameOver) {
       this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
       this.ctx.fillRect(0, 0, this.width, this.height);
@@ -441,13 +455,18 @@ export class PixelRenderer {
     }
   }
 
-  private drawSlopeEdges(): void {
-    for (let y = -16; y < this.height + 24; y += 54) {
+  private drawSlopeEdges(offsetY: number): void {
+    const treeSpacing = 54;
+    const rockSpacing = 170;
+    const treeStart = -16 + (offsetY % treeSpacing);
+    const rockStart = 45 + (offsetY % rockSpacing);
+
+    for (let y = treeStart - treeSpacing; y < this.height + 24; y += treeSpacing) {
       drawTree(this.ctx, 2, y);
       drawTree(this.ctx, this.width - 24, y + 20);
     }
 
-    for (let y = 45; y < this.height; y += 170) {
+    for (let y = rockStart - rockSpacing; y < this.height + 24; y += rockSpacing) {
       drawRock(this.ctx, 6, y);
       drawRock(this.ctx, this.width - 26, y + 80);
     }
