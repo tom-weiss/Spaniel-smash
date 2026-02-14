@@ -16,12 +16,12 @@ test('player movement is lane-limited and avoids side trees', () => {
   for (let i = 0; i < 20; i += 1) {
     game.step(150, { left: true, right: false });
   }
-  assert.equal(game.snapshot().playerX, 36.6);
+  assert.equal(game.snapshot().playerX, 66.6);
 
   for (let i = 0; i < 20; i += 1) {
     game.step(150, { left: false, right: true });
   }
-  assert.equal(game.snapshot().playerX, 246.6);
+  assert.equal(game.snapshot().playerX, 216.6);
 });
 
 test('spawned moving obstacles stay in playable lanes', () => {
@@ -30,7 +30,7 @@ test('spawned moving obstacles stay in playable lanes', () => {
   game.step(450, { left: false, right: false });
 
   const lanes = game.snapshot().entities.map((entity) => entity.lane);
-  assert.ok(lanes.every((lane) => lane >= 1 && lane <= 8));
+  assert.ok(lanes.every((lane) => lane >= 2 && lane <= 7));
 });
 
 test('smashing spaniel produces score, animation effect, and bloodstain obstacle', () => {
@@ -69,16 +69,19 @@ test('spaniel streak upgrades speed level and can spawn andy', () => {
   assert.ok(game.snapshot().entities.some((entity) => entity.type === 'andy'));
 });
 
-test('moving obstacle collisions animate and become static rocks', () => {
+test('moving obstacle collisions convert moving entities to the correct crash remains', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.forceSpawn({ type: 'skier', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
-  game.forceSpawn({ type: 'tree', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'spaniel', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
 
   game.step(16, { left: false, right: false });
   const collided = game.snapshot();
   const convertedRock = collided.entities.find((entity) => entity.type === 'rock' && entity.crashAnimationMs > 0);
+  const convertedBloodstain = collided.entities.find((entity) => entity.type === 'bloodstain');
   assert.ok(convertedRock);
+  assert.ok(convertedBloodstain);
   assert.ok(collided.effects.some((effect) => effect.kind === 'obstacle-crash'));
+  assert.ok(collided.effects.some((effect) => effect.kind === 'spaniel-smash'));
 
   game.step(320, { left: false, right: false });
   const settledRock = game.snapshot().entities.find((entity) => entity.type === 'rock');
@@ -113,13 +116,24 @@ test('non-spaniel collisions remove lives and game over freezes state updates', 
 });
 
 test('spawn lane fallback chooses nearest clear lane', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.45, 0.1]), 5);
-  game.forceSpawn({ type: 'tree', x: 130, y: 0, width: 10, height: 10, speed: 2.2 });
-  game.forceSpawn({ type: 'rock', x: 190, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.3, 0.1]), 10);
+  game.forceSpawn({ type: 'tree', x: 100, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
+  game.forceSpawn({ type: 'rock', x: 130, y: 0, width: 10, height: 10, speed: 2.2, lane: 4 });
   game.step(450, { left: false, right: false });
 
   const spawned = game.snapshot().entities.at(-1);
-  assert.equal(spawned.lane, 1);
+  assert.equal(spawned.lane, 2);
+});
+
+
+
+test('forceSpawn computes lane from x-position when lane is omitted', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'tree', x: 154, y: 40, width: 10, height: 10, speed: 0 });
+
+  const spawned = game.snapshot().entities[0];
+  assert.equal(spawned.lane, 5);
+  assert.equal(spawned.x, 156.6);
 });
 
 test('restart resets game and clears effects', () => {

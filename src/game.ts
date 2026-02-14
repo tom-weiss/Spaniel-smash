@@ -276,6 +276,22 @@ export class SpanielSmashGame {
 
     for (const index of indicesToTransform) {
       const entity = this.entities[index];
+      if (entity.type === "spaniel") {
+        this.spawnSmashEffect(entity.x, entity.y, "spaniel-smash");
+        this.entities[index] = {
+          ...entity,
+          type: "bloodstain",
+          y: entity.y + entity.height + 4,
+          width: this.laneWidth * 0.55,
+          height: 18,
+          speed: SpanielSmashGame.staticObstacleSpeed,
+          direction: 1,
+          laneSwitchCooldownMs: 0,
+          crashAnimationMs: 0
+        };
+        continue;
+      }
+
       this.spawnSmashEffect(entity.x, entity.y, "obstacle-crash");
       this.entities[index] = {
         ...entity,
@@ -390,11 +406,11 @@ export class SpanielSmashGame {
   }
 
   private minPlayableLane(): number {
-    return 1;
+    return Math.min(2, Math.floor((this.laneCount - 1) / 2));
   }
 
   private maxPlayableLane(): number {
-    return this.laneCount - 2;
+    return Math.max(this.minPlayableLane(), this.laneCount - 1 - this.minPlayableLane());
   }
 
   private laneX(lane: number): number {

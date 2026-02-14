@@ -21,16 +21,32 @@ class SkiMusic {
     if (!window.AudioContext) {
       return;
     }
+
     if (!this.audioCtx) {
       this.audioCtx = new window.AudioContext();
       this.master = this.audioCtx.createGain();
       this.master.gain.value = 0.03;
       this.master.connect(this.audioCtx.destination);
       this.resetSequence();
+    }
+
+    if (this.scheduler === null) {
       this.scheduler = window.setInterval(() => this.scheduleNotes(), 100);
     }
+
     if (this.audioCtx.state === "suspended") {
       void this.audioCtx.resume();
+    }
+  }
+
+  public stop(): void {
+    if (this.scheduler !== null) {
+      window.clearInterval(this.scheduler);
+      this.scheduler = null;
+    }
+
+    if (this.audioCtx?.state === "running") {
+      void this.audioCtx.suspend();
     }
   }
 
@@ -41,6 +57,34 @@ class SkiMusic {
     }
   }
 
+  public bark(): void {
+    if (!window.AudioContext) {
+      return;
+    }
+
+    if (!this.audioCtx) {
+      this.audioCtx = new window.AudioContext();
+      this.master = this.audioCtx.createGain();
+      this.master.gain.value = 0.04;
+      this.master.connect(this.audioCtx.destination);
+      this.resetSequence();
+    }
+
+    if (this.audioCtx.state === "suspended") {
+      void this.audioCtx.resume();
+    }
+
+    if (!this.master || !this.audioCtx) {
+      return;
+    }
+
+    const at = this.audioCtx.currentTime + 0.01;
+    const barkNotes = [330, 280, 240];
+    barkNotes.forEach((freq, index) => {
+      this.playNote(freq, at + index * 0.045, 0.04, "square", 0.26);
+    });
+  }
+
   private scheduleNotes(): void {
     if (!this.audioCtx || !this.master) {
       return;
@@ -49,7 +93,7 @@ class SkiMusic {
     const lookAhead = this.audioCtx.currentTime + 0.3;
     while (this.nextNoteTime < lookAhead) {
       const note = this.generateNote();
-      this.playNote(note, this.nextNoteTime, 0.13);
+      this.playNote(note, this.nextNoteTime, 0.13, "square", 0.22);
       this.nextNoteTime += 0.14;
     }
   }
@@ -64,17 +108,17 @@ class SkiMusic {
     return root * 2 ** ((degree + octave * 12) / 12);
   }
 
-  private playNote(freq: number, at: number, duration: number): void {
+  private playNote(freq: number, at: number, duration: number, wave: OscillatorType, peak: number): void {
     if (!this.audioCtx || !this.master) {
       return;
     }
     const osc = this.audioCtx.createOscillator();
-    osc.type = "square";
+    osc.type = wave;
     osc.frequency.setValueAtTime(Math.round(freq), at);
 
     const gain = this.audioCtx.createGain();
     gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(0.22, at + 0.01);
+    gain.gain.exponentialRampToValueAtTime(peak, at + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
     osc.connect(gain);
@@ -84,33 +128,61 @@ class SkiMusic {
   }
 }
 
+const FRIENDLY_SPANIEL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230f172a'/%3E%3Crect x='5' y='8' width='12' height='8' fill='%23f4a261'/%3E%3Crect x='15' y='6' width='6' height='6' fill='%23f4a261'/%3E%3Crect x='16' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='18' y='10' width='2' height='2' fill='%23000000'/%3E%3Crect x='19' y='5' width='2' height='6' fill='%238b5a2b'/%3E%3Crect x='4' y='9' width='2' height='5' fill='%238b5a2b'/%3E%3Crect x='8' y='16' width='2' height='4' fill='%23d97706'/%3E%3Crect x='13' y='16' width='2' height='4' fill='%23d97706'/%3E%3C/svg%3E";
+const GRINNING_SPANIEL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230f172a'/%3E%3Crect x='5' y='8' width='12' height='8' fill='%23f4a261'/%3E%3Crect x='15' y='6' width='6' height='6' fill='%23f4a261'/%3E%3Crect x='16' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='18' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='17' y='11' width='3' height='2' fill='%23ffffff'/%3E%3Crect x='16' y='13' width='5' height='1' fill='%23000000'/%3E%3Crect x='19' y='5' width='2' height='6' fill='%238b5a2b'/%3E%3Crect x='4' y='9' width='2' height='5' fill='%238b5a2b'/%3E%3Crect x='8' y='16' width='2' height='4' fill='%23d97706'/%3E%3Crect x='13' y='16' width='2' height='4' fill='%23d97706'/%3E%3C/svg%3E";
+
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
 const input = { left: false, right: false };
-const startupBanner = document.getElementById("startup-banner");
 const instructionText = document.getElementById("instruction-text");
+const splashScreen = document.getElementById("splash-screen");
+const splashTitle = document.getElementById("splash-title");
+const splashCopy = document.getElementById("splash-copy");
+const splashButton = document.getElementById("splash-start");
+const splashImage = document.getElementById("splash-image") as HTMLImageElement | null;
 const isTouchMode = window.matchMedia("(pointer: coarse)").matches;
 
-if (isTouchMode) {
-  if (startupBanner) {
-    startupBanner.textContent = "Ready? Tap to start.";
-  }
-  if (instructionText) {
-    instructionText.textContent = "Tap left/right to move skier. Smash spaniels. Avoid obstacles + Andy.";
-  }
+if (isTouchMode && instructionText) {
+  instructionText.textContent = "Tap left/right to move skier. Smash spaniels. Avoid obstacles + Andy.";
 }
 
-const dismissBanner = (): void => {
-  if (!startupBanner) {
+let isPlaying = false;
+let gameOverHandled = false;
+
+function showSplash(mode: "start" | "game-over"): void {
+  if (!splashScreen || !splashTitle || !splashCopy || !splashButton || !splashImage) {
     return;
   }
 
-  startupBanner.classList.add("hidden");
-};
+  splashScreen.classList.remove("hidden");
+  if (mode === "start") {
+    splashTitle.textContent = "SPANIEL SMASH";
+    splashCopy.textContent = "Arrow keys or tap controls to move. Smash spaniels, dodge trees, rocks, skiers, and Andy.";
+    splashButton.textContent = "START";
+    splashImage.src = FRIENDLY_SPANIEL;
+    splashImage.alt = "Pixel art spaniel";
+    return;
+  }
+
+  splashTitle.textContent = "GAME OVER";
+  splashCopy.textContent = "Grrr! The spaniel wins this round. Hit restart and smash them all again.";
+  splashButton.textContent = "RESTART";
+  splashImage.src = GRINNING_SPANIEL;
+  splashImage.alt = "Grinning pixel spaniel";
+}
+
+function hideSplash(): void {
+  splashScreen?.classList.add("hidden");
+}
 
 window.addEventListener("keydown", (event) => {
-  music.start();
+  if (!isPlaying || game.snapshot().isGameOver) {
+    return;
+  }
+
   if (event.key === "ArrowLeft") {
     input.left = true;
   }
@@ -118,6 +190,7 @@ window.addEventListener("keydown", (event) => {
     input.right = true;
   }
 });
+
 window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowLeft") {
     input.left = false;
@@ -129,7 +202,6 @@ window.addEventListener("keyup", (event) => {
 
 const leftControl = document.getElementById("control-left");
 const rightControl = document.getElementById("control-right");
-const restartControl = document.getElementById("control-restart");
 
 function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): void {
   if (!control) {
@@ -138,8 +210,9 @@ function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): v
 
   const activate = (event: Event): void => {
     event.preventDefault();
-    dismissBanner();
-    music.start();
+    if (!isPlaying || game.snapshot().isGameOver) {
+      return;
+    }
     input[key] = true;
   };
 
@@ -160,34 +233,48 @@ function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): v
 bindTouchControl(leftControl, "left");
 bindTouchControl(rightControl, "right");
 
-if (restartControl) {
-  restartControl.addEventListener("click", () => {
+splashButton?.addEventListener("click", () => {
+  if (game.snapshot().isGameOver) {
     game.restart();
     music.resetSequence();
-    dismissBanner();
-  });
-}
+  }
 
-window.addEventListener("keydown", dismissBanner, { once: true });
-window.addEventListener("pointerdown", dismissBanner, { once: true });
+  gameOverHandled = false;
+  input.left = false;
+  input.right = false;
+  isPlaying = true;
+  music.start();
+  hideSplash();
+});
+
+showSplash("start");
 
 let lastFrame = performance.now();
 
 function frame(now: number): void {
   const delta = Math.min(33, now - lastFrame);
   lastFrame = now;
-  game.step(delta, input);
+
+  if (isPlaying) {
+    game.step(delta, input);
+  }
+
   const snapshot = game.snapshot();
   renderer.render(snapshot);
 
-  if (restartControl) {
-    restartControl.toggleAttribute("hidden", !snapshot.isGameOver);
-  }
   if (leftControl) {
-    leftControl.toggleAttribute("hidden", snapshot.isGameOver);
+    leftControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
   }
   if (rightControl) {
-    rightControl.toggleAttribute("hidden", snapshot.isGameOver);
+    rightControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
+  }
+
+  if (snapshot.isGameOver && !gameOverHandled) {
+    gameOverHandled = true;
+    isPlaying = false;
+    music.stop();
+    music.bark();
+    showSplash("game-over");
   }
 
   requestAnimationFrame(frame);
