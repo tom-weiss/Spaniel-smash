@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" role="img" aria-label="slalom poles obstacle">
+  <rect width="56" height="56" fill="#f8fafc"/>
+  <rect x="20" y="11" width="3" height="30" fill="#ef4444"/>
+  <rect x="33" y="11" width="3" height="30" fill="#1d4ed8"/>
+
+  <rect x="20" y="18" width="3" height="3" fill="#ffffff"/>
+  <rect x="20" y="25" width="3" height="3" fill="#ffffff"/>
+  <rect x="20" y="32" width="3" height="3" fill="#ffffff"/>
+  <rect x="33" y="15" width="3" height="3" fill="#ffffff"/>
+  <rect x="33" y="22" width="3" height="3" fill="#ffffff"/>
+  <rect x="33" y="29" width="3" height="3" fill="#ffffff"/>
+
+  <rect x="19" y="41" width="5" height="2" fill="#1f2937"/>
+  <rect x="32" y="41" width="5" height="2" fill="#1f2937"/>
+</svg>

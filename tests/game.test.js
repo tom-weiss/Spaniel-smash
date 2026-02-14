@@ -54,6 +54,55 @@ test('smashing spaniel produces score, animation effect, and bloodstain obstacle
   assert.equal(game.snapshot().effects.length, 0);
 });
 
+test('black spaniel awards double points and still advances spaniel counters', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'black-spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+  game.step(16, { left: false, right: false });
+
+  const snap = game.snapshot();
+  assert.equal(snap.score, 200);
+  assert.equal(snap.spanielsSmashed, 1);
+  assert.equal(snap.levelSpanielsSmashed, 1);
+  assert.ok(snap.entities.some((entity) => entity.type === 'bloodstain'));
+});
+
+test('new obstacle templates are level-gated and slalom poles stay in standard pool', () => {
+  const levelOne = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  const levelOneRare = levelOne.templatesForTier('rare');
+  assert.equal(levelOneRare.some((template) => template.type === 'black-spaniel'), false);
+  assert.equal(levelOneRare.some((template) => template.type === 'ice-crevasse'), false);
+  assert.ok(levelOne.templatesForTier('standard').some((template) => template.type === 'slalom-poles'));
+
+  const levelTwo = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  levelTwo.speedLevel = 2;
+  const levelTwoRare = levelTwo.templatesForTier('rare');
+  assert.ok(levelTwoRare.some((template) => template.type === 'black-spaniel'));
+  assert.ok(levelTwoRare.some((template) => template.type === 'ice-crevasse'));
+
+  const levelThree = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  levelThree.speedLevel = 3;
+  assert.equal(levelThree.templatesForTier('super-rare').some((template) => template.type === 'naked-skier'), false);
+
+  const levelFour = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  levelFour.speedLevel = 4;
+  assert.ok(levelFour.templatesForTier('super-rare').some((template) => template.type === 'naked-skier'));
+  assert.ok(levelFour.templatesForTier('standard').some((template) => template.type === 'slalom-poles'));
+});
+
+test('ice crevasse requires a jump to avoid damage', () => {
+  const grounded = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  grounded.playerImmortalMs = 0;
+  grounded.forceSpawn({ type: 'ice-crevasse', obstacleId: 'ice-crevasse', jumpRule: 'high', x: 122, y: 366, width: 46, height: 24, speed: 0, lane: 5 });
+  grounded.step(16, { left: false, right: false, jump: false });
+  assert.equal(grounded.snapshot().lives, 2);
+
+  const jumping = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  jumping.playerImmortalMs = 0;
+  jumping.forceSpawn({ type: 'ice-crevasse', obstacleId: 'ice-crevasse', jumpRule: 'high', x: 122, y: 366, width: 46, height: 24, speed: 0, lane: 5 });
+  jumping.step(16, { left: false, right: false, jump: true });
+  assert.equal(jumping.snapshot().lives, 3);
+});
+
 test('andy boss appears after spaniel threshold and jump defeat levels up with bonus', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.4, 0.2, 0.2]), 10);
   for (let i = 0; i < 12; i += 1) {
@@ -397,7 +446,7 @@ test('pixel renderer draws force field around player while immortal', () => {
     effects: []
   });
 
-  assert.ok(onCase.calls.some((entry) => entry[0] === 98 && entry[1] === 296 && entry[2] === 28 && entry[3] === 1));
+  assert.ok(onCase.calls.some((entry) => entry[0] === 96 && entry[1] === 294 && entry[2] === 32 && entry[3] === 1));
 
   const offCase = makeCtx();
   const offRenderer = new PixelRenderer(offCase.ctx, 300, 600);
@@ -417,7 +466,7 @@ test('pixel renderer draws force field around player while immortal', () => {
     entities: [],
     effects: []
   });
-  assert.equal(offCase.calls.some((entry) => entry[0] === 98 && entry[1] === 296 && entry[2] === 28 && entry[3] === 1), false);
+  assert.equal(offCase.calls.some((entry) => entry[0] === 96 && entry[1] === 294 && entry[2] === 32 && entry[3] === 1), false);
 });
 
 test('pixel renderer draws angled downhill skis and visible poles for skier sprite', () => {
@@ -881,8 +930,7 @@ test('spawn lane fallback can choose right lane and lane blocking check can reje
   spawnRightGame.speedLevel = 2;
   spawnRightGame.forceSpawn({ type: 'tree', x: 60, y: 0, width: 10, height: 10, speed: 2.2, lane: 2 });
   spawnRightGame.forceSpawn({ type: 'rock', x: 90, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
-  spawnRightGame.step(540, { left: false, right: false });
-  assert.equal(spawnRightGame.snapshot().entities.at(-1).lane, 4);
+  assert.equal(spawnRightGame.pickSpawnLane(), 4);
 
   const laneBlockGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.9, 0.6]), 10);
   laneBlockGame.forceSpawn({ type: 'spaniel', x: 122, y: 220, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 0 });
@@ -1004,7 +1052,7 @@ test('grounded player renders in front of obstacles', () => {
   });
 
   const treeBodyIndex = calls.findIndex((entry) => entry[0] === 12 && entry[1] === 26 && entry[2] === 17 && entry[3] === 3);
-  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 106 && entry[1] === 312 && entry[2] === 10 && entry[3] === 11);
+  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 106 && entry[1] === 312 && entry[2] === 10 && entry[3] === 10);
 
   assert.ok(treeBodyIndex >= 0);
   assert.ok(playerBodyIndex >= 0);

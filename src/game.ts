@@ -2,7 +2,11 @@ export type EntityType =
   | "tree"
   | "rock"
   | "skier"
+  | "naked-skier"
   | "spaniel"
+  | "black-spaniel"
+  | "slalom-poles"
+  | "ice-crevasse"
   | "andy"
   | "poo-bag"
   | "bloodstain"
@@ -27,37 +31,44 @@ interface ObstacleTemplate {
   height: number;
   speed: number;
   moving: boolean;
+  minLevel?: number;
+  maxLevel?: number;
+  weight?: number;
 }
 
 const STANDARD_OBSTACLES: ObstacleTemplate[] = [
-  { type: "tree", obstacleId: "cracked-sidewalk-slab", jumpRule: "low", widthScale: 0.5, height: 24, speed: 2.2, moving: false },
-  { type: "rock", obstacleId: "trash-bag-cluster", jumpRule: "low", widthScale: 0.55, height: 22, speed: 2.2, moving: false },
-  { type: "tree", obstacleId: "construction-cone-pair", jumpRule: "low", widthScale: 0.52, height: 24, speed: 2.2, moving: false },
-  { type: "ice-patch", obstacleId: "ice-patch", jumpRule: "none", widthScale: 0.58, height: 20, speed: 2.2, moving: false },
-  { type: "tree", obstacleId: "mail-crate-stack", jumpRule: "high", widthScale: 0.58, height: 32, speed: 2.2, moving: false },
-  { type: "skier", obstacleId: "rolling-skateboard", jumpRule: "low", widthScale: 0.56, height: 28, speed: 1.6, moving: true },
-  { type: "skier", obstacleId: "jogger-crossing", jumpRule: "none", widthScale: 0.56, height: 30, speed: 1.4, moving: true },
-  { type: "spaniel", obstacleId: "bouncing-ball", jumpRule: "low", widthScale: 0.45, height: 18, speed: 1.7, moving: true },
-  { type: "spaniel", obstacleId: "squirrel-zigzag", jumpRule: "none", widthScale: 0.5, height: 22, speed: 1.8, moving: true }
+  { type: "spaniel", obstacleId: "bouncing-ball", jumpRule: "low", widthScale: 0.45, height: 18, speed: 1.7, moving: true, minLevel: 1, weight: 1.4 },
+  { type: "spaniel", obstacleId: "squirrel-zigzag", jumpRule: "none", widthScale: 0.5, height: 22, speed: 1.8, moving: true, minLevel: 1, weight: 1.35 },
+  { type: "slalom-poles", obstacleId: "slalom-poles", jumpRule: "low", widthScale: 0.48, height: 28, speed: 2.2, moving: false, minLevel: 1, weight: 1.8 },
+  { type: "tree", obstacleId: "cracked-sidewalk-slab", jumpRule: "low", widthScale: 0.5, height: 24, speed: 2.2, moving: false, minLevel: 1, weight: 0.9 },
+  { type: "rock", obstacleId: "trash-bag-cluster", jumpRule: "low", widthScale: 0.55, height: 22, speed: 2.2, moving: false, minLevel: 1, weight: 0.85 },
+  { type: "tree", obstacleId: "construction-cone-pair", jumpRule: "low", widthScale: 0.52, height: 24, speed: 2.2, moving: false, minLevel: 1, weight: 0.75 },
+  { type: "ice-patch", obstacleId: "ice-patch", jumpRule: "none", widthScale: 0.58, height: 20, speed: 2.2, moving: false, minLevel: 2, weight: 0.8 },
+  { type: "skier", obstacleId: "rolling-skateboard", jumpRule: "low", widthScale: 0.56, height: 28, speed: 1.6, moving: true, minLevel: 2, weight: 0.7 },
+  { type: "tree", obstacleId: "mail-crate-stack", jumpRule: "high", widthScale: 0.58, height: 32, speed: 2.2, moving: false, minLevel: 3, weight: 0.6 },
+  { type: "skier", obstacleId: "jogger-crossing", jumpRule: "none", widthScale: 0.56, height: 30, speed: 1.4, moving: true, minLevel: 3, weight: 0.55 }
 ];
 
 const RARE_OBSTACLES: ObstacleTemplate[] = [
-  { type: "tree", obstacleId: "fence-segment", jumpRule: "high", widthScale: 0.62, height: 36, speed: 2.3, moving: false },
-  { type: "rock", obstacleId: "open-manhole", jumpRule: "high", widthScale: 0.6, height: 28, speed: 2.3, moving: false },
-  { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false },
-  { type: "skier", obstacleId: "fallen-signboard", jumpRule: "high", widthScale: 0.62, height: 30, speed: 1.5, moving: true },
-  { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false },
-  { type: "drone-package-drop", obstacleId: "drone-package-drop", jumpRule: "low", widthScale: 0.54, height: 24, speed: 2.1, moving: false },
-  { type: "spaniel", obstacleId: "leashed-dog-lunge", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.7, moving: true },
-  { type: "skier", obstacleId: "scooter-rider", jumpRule: "none", widthScale: 0.58, height: 32, speed: 2.0, moving: true }
+  { type: "tree", obstacleId: "fence-segment", jumpRule: "high", widthScale: 0.62, height: 36, speed: 2.3, moving: false, minLevel: 1, weight: 0.95 },
+  { type: "rock", obstacleId: "open-manhole", jumpRule: "high", widthScale: 0.6, height: 28, speed: 2.3, moving: false, minLevel: 1, weight: 0.9 },
+  { type: "spaniel", obstacleId: "leashed-dog-lunge", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.7, moving: true, minLevel: 2, weight: 0.8 },
+  { type: "black-spaniel", obstacleId: "black-spaniel", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.75, moving: true, minLevel: 2, weight: 0.36 },
+  { type: "ice-crevasse", obstacleId: "ice-crevasse", jumpRule: "high", widthScale: 1.55, height: 24, speed: 2.25, moving: false, minLevel: 2, weight: 0.42 },
+  { type: "puddle-patch", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 2.2, moving: false, minLevel: 2, weight: 0.72 },
+  { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false, minLevel: 2, weight: 0.78 },
+  { type: "skier", obstacleId: "fallen-signboard", jumpRule: "high", widthScale: 0.62, height: 30, speed: 1.5, moving: true, minLevel: 3, weight: 0.64 },
+  { type: "drone-package-drop", obstacleId: "drone-package-drop", jumpRule: "low", widthScale: 0.54, height: 24, speed: 2.1, moving: false, minLevel: 3, weight: 0.5 },
+  { type: "skier", obstacleId: "scooter-rider", jumpRule: "none", widthScale: 0.58, height: 32, speed: 2.0, moving: true, minLevel: 3, weight: 0.54 }
 ];
 
 const SUPER_RARE_OBSTACLES: ObstacleTemplate[] = [
-  { type: "tree", obstacleId: "collapsed-scaffolding", jumpRule: "high", widthScale: 0.75, height: 40, speed: 2.5, moving: false },
-  { type: "rock", obstacleId: "roadwork-trench", jumpRule: "high", widthScale: 0.76, height: 40, speed: 2.45, moving: false },
-  { type: "tree", obstacleId: "blocked-intersection", jumpRule: "none", widthScale: 0.8, height: 38, speed: 2.3, moving: false },
-  { type: "rock", obstacleId: "statue-base-rubble", jumpRule: "high", widthScale: 0.72, height: 34, speed: 2.4, moving: false },
-  { type: "helicopter-downdraft", obstacleId: "helicopter-downdraft", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.8, moving: true }
+  { type: "tree", obstacleId: "collapsed-scaffolding", jumpRule: "high", widthScale: 0.75, height: 40, speed: 2.5, moving: false, minLevel: 2, weight: 0.9 },
+  { type: "rock", obstacleId: "roadwork-trench", jumpRule: "high", widthScale: 0.76, height: 40, speed: 2.45, moving: false, minLevel: 2, weight: 0.82 },
+  { type: "tree", obstacleId: "blocked-intersection", jumpRule: "none", widthScale: 0.8, height: 38, speed: 2.3, moving: false, minLevel: 3, weight: 0.7 },
+  { type: "rock", obstacleId: "statue-base-rubble", jumpRule: "high", widthScale: 0.72, height: 34, speed: 2.4, moving: false, minLevel: 3, weight: 0.66 },
+  { type: "helicopter-downdraft", obstacleId: "helicopter-downdraft", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.8, moving: true, minLevel: 3, weight: 0.58 },
+  { type: "naked-skier", obstacleId: "naked-skier", jumpRule: "low", widthScale: 0.58, height: 30, speed: 1.95, moving: true, minLevel: 4, weight: 0.16 }
 ];
 
 const MYTHIC_OBSTACLES: ObstacleTemplate[] = [
@@ -394,24 +405,48 @@ export class SpanielSmashGame {
     this.entities.push(this.makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY));
   }
 
-  private pickTemplateForTier(tier: ObstacleTier): ObstacleTemplate {
+  private templatesForTier(tier: ObstacleTier): ObstacleTemplate[] {
     const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
-    const roll = this.rng();
-    if (tier === "standard" && this.speedLevel === 1) {
-      const spanielTemplates = templates.filter((template) => template.type === "spaniel");
-      const nonSpanielTemplates = templates.filter((template) => template.type !== "spaniel");
-      if (spanielTemplates.length > 0 && nonSpanielTemplates.length > 0) {
-        if (roll < SpanielSmashGame.levelOneStandardSpanielChance) {
-          const spanielProgress = roll / SpanielSmashGame.levelOneStandardSpanielChance;
-          const spanielIndex = Math.min(spanielTemplates.length - 1, Math.floor(spanielProgress * spanielTemplates.length));
-          return spanielTemplates[spanielIndex] ?? templates[0];
-        }
-        const nonSpanielProgress = (roll - SpanielSmashGame.levelOneStandardSpanielChance) / (1 - SpanielSmashGame.levelOneStandardSpanielChance);
-        const nonSpanielIndex = Math.min(nonSpanielTemplates.length - 1, Math.floor(nonSpanielProgress * nonSpanielTemplates.length));
-        return nonSpanielTemplates[nonSpanielIndex] ?? templates[0];
+    return templates.filter((template) => {
+      const minLevel = template.minLevel ?? 1;
+      const maxLevel = template.maxLevel ?? Number.POSITIVE_INFINITY;
+      return this.speedLevel >= minLevel && this.speedLevel <= maxLevel;
+    });
+  }
+
+  private pickWeightedTemplate(templates: ObstacleTemplate[]): ObstacleTemplate {
+    const totalWeight = templates.reduce((sum, template) => sum + Math.max(0.01, template.weight ?? 1), 0);
+    let cursor = this.rng() * totalWeight;
+    for (const template of templates) {
+      cursor -= Math.max(0.01, template.weight ?? 1);
+      if (cursor <= 0) {
+        return template;
       }
     }
-    return templates[Math.floor(roll * templates.length)] ?? templates[0];
+    return templates[templates.length - 1] ?? STANDARD_OBSTACLES[0];
+  }
+
+  private pickTemplateForTier(tier: ObstacleTier): ObstacleTemplate {
+    let templates = this.templatesForTier(tier);
+    if (templates.length === 0 && tier !== "standard") {
+      templates = this.templatesForTier("standard");
+    }
+    if (templates.length === 0) {
+      templates = STANDARD_OBSTACLES;
+    }
+
+    const roll = this.rng();
+    if (tier === "standard" && this.speedLevel === 1) {
+      const spanielTemplates = templates.filter((template) => template.type === "spaniel" || template.type === "black-spaniel");
+      const nonSpanielTemplates = templates.filter((template) => template.type !== "spaniel" && template.type !== "black-spaniel");
+      if (spanielTemplates.length > 0 && nonSpanielTemplates.length > 0) {
+        if (roll < SpanielSmashGame.levelOneStandardSpanielChance) {
+          return this.pickWeightedTemplate(spanielTemplates);
+        }
+        return this.pickWeightedTemplate(nonSpanielTemplates);
+      }
+    }
+    return this.pickWeightedTemplate(templates);
   }
 
   private makeEntityFromTemplate(template: ObstacleTemplate, tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): Entity {
@@ -420,6 +455,7 @@ export class SpanielSmashGame {
     const isDroneTelegraph = behaviorState?.kind === "droneDrop" && behaviorState.phase === "telegraph";
     const isMoving = template.moving && !isLanePatch && !isDroneTelegraph;
     const speedVariance = isMoving ? this.rng() * 0.35 : 0;
+    const staticSpawnY = template.type === "ice-crevasse" ? -30 : -24;
     return {
       id: this.nextEntityId++,
       type: template.type,
@@ -428,7 +464,7 @@ export class SpanielSmashGame {
       jumpRule: template.jumpRule,
       behaviorState,
       x: spawnX,
-      y: isDroneTelegraph ? this.playerY() + 8 : isMoving ? movingSpawnY : -24,
+      y: isDroneTelegraph ? this.playerY() + 8 : isMoving ? movingSpawnY : staticSpawnY,
       width: this.laneWidth * template.widthScale,
       height: template.height,
       speed: isDroneTelegraph ? 0 : template.speed + speedVariance,
@@ -717,11 +753,11 @@ export class SpanielSmashGame {
         continue;
       }
 
-      if (entity.type === "spaniel") {
+      if (entity.type === "spaniel" || entity.type === "black-spaniel") {
         this.spawnSmashEffect(entity.x, entity.y, "spaniel-smash");
         this.spawnSmashEffect(entity.x, entity.y, "coin-pop");
         this.spawnBloodstain(entity);
-        this.score += 100;
+        this.score += entity.type === "black-spaniel" ? 200 : 100;
         this.spanielsSmashed += 1;
         this.levelSpanielsSmashed += 1;
         this.mythicUnlocked = this.mythicUnlocked || this.spanielsSmashed >= 25;
@@ -807,6 +843,24 @@ export class SpanielSmashGame {
       };
     }
 
+    if (entity.type === "slalom-poles") {
+      return {
+        x: bounds.x + bounds.width * 0.28,
+        y: bounds.y + bounds.height * 0.05,
+        width: bounds.width * 0.44,
+        height: bounds.height * 0.92
+      };
+    }
+
+    if (entity.type === "ice-crevasse") {
+      return {
+        x: bounds.x + bounds.width * 0.05,
+        y: bounds.y + bounds.height * 0.2,
+        width: bounds.width * 0.9,
+        height: bounds.height * 0.72
+      };
+    }
+
     if (entity.type === "tree") {
       return {
         x: bounds.x + bounds.width * 0.06,
@@ -843,7 +897,7 @@ export class SpanielSmashGame {
 
     for (const index of indicesToTransform) {
       const entity = this.entities[index];
-      this.spawnSmashEffect(entity.x, entity.y, entity.type === "spaniel" ? "spaniel-smash" : "obstacle-crash");
+      this.spawnSmashEffect(entity.x, entity.y, (entity.type === "spaniel" || entity.type === "black-spaniel") ? "spaniel-smash" : "obstacle-crash");
       this.entities[index] = {
         ...entity,
         id: this.nextEntityId++,
@@ -864,11 +918,19 @@ export class SpanielSmashGame {
   }
 
   private isMovingObstacle(entity: Entity): boolean {
-    return entity.type === "skier" || entity.type === "spaniel" || entity.type === "helicopter-downdraft";
+    return entity.type === "skier"
+      || entity.type === "naked-skier"
+      || entity.type === "spaniel"
+      || entity.type === "black-spaniel"
+      || entity.type === "helicopter-downdraft";
   }
 
   private isLethalForMovingObstacleCollision(entity: Entity): boolean {
-    if (entity.type === "bloodstain" || entity.type === "puddle-patch" || entity.type === "ice-patch" || entity.type === "spaniel") {
+    if (entity.type === "bloodstain"
+      || entity.type === "puddle-patch"
+      || entity.type === "ice-patch"
+      || entity.type === "spaniel"
+      || entity.type === "black-spaniel") {
       return false;
     }
     if (entity.type === "drone-package-drop" && entity.behaviorState?.kind === "droneDrop" && entity.behaviorState.phase === "telegraph") {
@@ -989,7 +1051,12 @@ export class SpanielSmashGame {
   }
 
   private maybeMoveEntityLane(entity: Entity, deltaMs: number): void {
-    if (entity.type !== "skier" && entity.type !== "spaniel" && entity.type !== "andy" && entity.type !== "helicopter-downdraft") return;
+    if (entity.type !== "skier"
+      && entity.type !== "naked-skier"
+      && entity.type !== "spaniel"
+      && entity.type !== "black-spaniel"
+      && entity.type !== "andy"
+      && entity.type !== "helicopter-downdraft") return;
     const currentLane = this.entityLane(entity);
     const cooldown = Math.max(0, (entity.laneSwitchCooldownMs ?? 0) - deltaMs);
     entity.laneSwitchCooldownMs = cooldown;
@@ -1083,6 +1150,10 @@ export class PixelRenderer {
         drawPuddlePatch(this.ctx, entity.x, entity.y);
       } else if (entity.type === "ice-patch") {
         drawIcePatch(this.ctx, entity.x, entity.y);
+      } else if (entity.type === "ice-crevasse") {
+        drawIceCrevasse(this.ctx, entity.x, entity.y, entity.width);
+      } else if (entity.type === "slalom-poles") {
+        drawSlalomPoles(this.ctx, entity.x, entity.y);
       } else if (entity.type === "drone-package-drop") {
         if (entity.behaviorState?.kind === "droneDrop" && entity.behaviorState.phase === "telegraph") {
           drawDroneTelegraph(this.ctx, entity.x, entity.y);
@@ -1101,10 +1172,15 @@ export class PixelRenderer {
       else if (entity.type === "rock") {
         if ((entity.crashAnimationMs ?? 0) > 0) drawCrashPulse(this.ctx, entity.x, entity.y, entity.crashAnimationMs ?? 0, "#ffa500");
         drawRock(this.ctx, entity.x, entity.y);
-      } else if (entity.type === "skier") drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#ff6b6b");
-      else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x);
+      } else if (entity.type === "skier") drawSkierSlim(this.ctx, entity.x, entity.y, "#3a86ff", "#ff6b6b");
+      else if (entity.type === "naked-skier") drawNakedSkier(this.ctx, entity.x, entity.y);
+      else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x, "brown");
+      else if (entity.type === "black-spaniel") drawSpaniel(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x, "black");
       else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
-      else drawAndy(this.ctx, entity.x, entity.y);
+      else {
+        drawAndyShadow(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x);
+        drawAndy(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x);
+      }
     }
 
     const playerRenderY = snapshot.isCrashActive ? snapshot.playerY : snapshot.playerY - snapshot.playerJumpOffset;
@@ -1113,9 +1189,9 @@ export class PixelRenderer {
     }
 
     if (snapshot.isCrashActive) {
-      drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#dc2626", "#ffd166");
+      drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#f97316", "#ffd166");
     } else {
-      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#dc2626", "#ffd166", snapshot.playerJumpOffset);
+      drawSkierSlim(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#f97316", "#ffd166", snapshot.playerJumpOffset);
     }
 
     for (const effect of snapshot.effects) drawSmashEffect(this.ctx, effect);
@@ -1278,28 +1354,33 @@ function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): vo
   ctx.fillRect(x + 9, y + 14, 5, 2);
   ctx.fillRect(x + 13, y + 8, 2, 2);
 }
-function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number, animationSeed = 0): void {
+function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number, animationSeed = 0, coat: "brown" | "black" = "brown"): void {
   const wagFrame = Math.floor(animationSeed / 5) % 4;
   const tailOffsetX = wagFrame < 2 ? -1 : 0;
   const tailOffsetY = wagFrame === 1 || wagFrame === 2 ? -1 : 0;
-  ctx.fillStyle = "#8b5e3c";
+  const baseCoat = coat === "black" ? "#1f2937" : "#8b5e3c";
+  const highlightCoat = coat === "black" ? "#4b5563" : "#c58f63";
+  const shadowCoat = coat === "black" ? "#111827" : "#6b3f2a";
+  const collarColor = coat === "black" ? "#60a5fa" : "#2a9d8f";
+
+  ctx.fillStyle = baseCoat;
   ctx.fillRect(x + 3, y + 9, 12, 7);
   ctx.fillRect(x + 14, y + 10, 4, 5);
   ctx.fillRect(x + 15, y + 7, 5, 5);
   ctx.fillRect(x + 19, y + 9, 3, 2);
   ctx.fillRect(x + 1 + tailOffsetX, y + 8 + tailOffsetY, 3, 2);
-  ctx.fillStyle = "#c58f63";
+  ctx.fillStyle = highlightCoat;
   ctx.fillRect(x + 5, y + 10, 7, 2);
   ctx.fillRect(x + 16, y + 9, 3, 2);
   ctx.fillRect(x + 20, y + 10, 2, 1);
   ctx.fillRect(x + 2 + tailOffsetX, y + 8 + tailOffsetY, 1, 1);
-  ctx.fillStyle = "#6b3f2a";
+  ctx.fillStyle = shadowCoat;
   ctx.fillRect(x + 15, y + 8, 1, 5);
   ctx.fillRect(x + 18, y + 8, 1, 5);
   ctx.fillRect(x + 5, y + 16, 2, 3);
   ctx.fillRect(x + 10, y + 16, 2, 3);
   ctx.fillRect(x + 15, y + 15, 2, 4);
-  ctx.fillStyle = "#2a9d8f";
+  ctx.fillStyle = collarColor;
   ctx.fillRect(x + 13, y + 11, 2, 2);
   ctx.fillStyle = "#111827";
   ctx.fillRect(x + 18, y + 9, 1, 1);
@@ -1336,6 +1417,42 @@ function drawIcePatch(ctx: CanvasRenderingContext2D, x: number, y: number): void
   ctx.fillRect(x + 7, y + 10, 1, 8);
   ctx.fillRect(x + 12, y + 11, 1, 7);
 }
+function drawSlalomPoles(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#ef4444";
+  ctx.fillRect(x + 6, y + 3, 2, 20);
+  ctx.fillStyle = "#1d4ed8";
+  ctx.fillRect(x + 14, y + 3, 2, 20);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x + 6, y + 8, 2, 2);
+  ctx.fillRect(x + 6, y + 13, 2, 2);
+  ctx.fillRect(x + 6, y + 18, 2, 2);
+  ctx.fillRect(x + 14, y + 6, 2, 2);
+  ctx.fillRect(x + 14, y + 11, 2, 2);
+  ctx.fillRect(x + 14, y + 16, 2, 2);
+
+  ctx.fillStyle = "#1f2937";
+  ctx.fillRect(x + 5, y + 23, 4, 1);
+  ctx.fillRect(x + 13, y + 23, 4, 1);
+}
+function drawIceCrevasse(ctx: CanvasRenderingContext2D, x: number, y: number, width: number): void {
+  const totalWidth = Math.max(24, Math.round(width));
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(Math.round(x), y + 9, totalWidth, 9);
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(Math.round(x) + 2, y + 11, Math.max(6, totalWidth - 4), 5);
+
+  ctx.fillStyle = "#93c5fd";
+  ctx.fillRect(Math.round(x) + 1, y + 8, Math.max(6, totalWidth - 2), 1);
+  ctx.fillRect(Math.round(x) + 3, y + 18, Math.max(4, totalWidth - 6), 1);
+
+  const crackStart = Math.round(x) + Math.max(3, Math.floor(totalWidth * 0.16));
+  ctx.fillStyle = "#e2e8f0";
+  ctx.fillRect(crackStart, y + 12, 2, 3);
+  ctx.fillRect(crackStart + Math.floor(totalWidth * 0.18), y + 13, 2, 2);
+  ctx.fillRect(crackStart + Math.floor(totalWidth * 0.4), y + 11, 2, 3);
+  ctx.fillRect(crackStart + Math.floor(totalWidth * 0.64), y + 12, 2, 2);
+}
 function drawDroneTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   ctx.fillStyle = "rgba(239, 68, 68, 0.75)";
   ctx.fillRect(x + 3, y + 11, 14, 2);
@@ -1362,6 +1479,91 @@ function drawPooBag(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   ctx.fillRect(x + 6, y + 7, 8, 6);
   ctx.fillStyle = "#86efac";
   ctx.fillRect(x + 11, y + 8, 2, 2);
+}
+function drawSkierSlim(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string, jumpOffset = 0): void {
+  const inAir = jumpOffset > 0;
+  const bodyHeight = inAir ? 9 : 10;
+  const bodyY = inAir ? y + 13 : y + 12;
+  const helmetY = inAir ? y + 5 : y + 6;
+  const poleStartY = bodyY + 1;
+  const poleLength = inAir ? 11 : 13;
+  const skiStartY = inAir ? y + 24 : y + 26;
+  const skiSpread = inAir ? [0, 1, 1, 2, 2, 3] : [0, 1, 1, 2, 2, 3, 3];
+  const legTopY = bodyY + bodyHeight - 1;
+  const legHeight = inAir ? 5 : 6;
+
+  // Slimmer torso/helmet while keeping the established downhill ski stance.
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(x + 6, bodyY, 10, bodyHeight);
+  ctx.fillStyle = bodyColor;
+  ctx.fillRect(x + 7, bodyY + 1, 8, bodyHeight - 1);
+  ctx.fillRect(x + 6, bodyY + 2, 1, 2);
+  ctx.fillRect(x + 15, bodyY + 2, 1, 2);
+  ctx.fillStyle = "rgba(15, 23, 42, 0.3)";
+  ctx.fillRect(x + 11, bodyY + 2, 1, Math.max(2, bodyHeight - 4));
+  ctx.fillRect(x + 9, bodyY + bodyHeight - 3, 4, 1);
+
+  ctx.fillStyle = helmetColor;
+  ctx.fillRect(x + 9, helmetY, 5, 5);
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(x + 10, helmetY + 2, 3, 2);
+  ctx.fillRect(x + 9, helmetY + 4, 5, 1);
+  ctx.fillStyle = "#e2e8f0";
+  ctx.fillRect(x + 10, helmetY + 1, 2, 1);
+  ctx.fillStyle = "#475569";
+  ctx.fillRect(x + 9, helmetY + 2, 1, 2);
+  ctx.fillRect(x + 13, helmetY + 2, 1, 2);
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(x + 9, helmetY + 5, 5, 1);
+  ctx.fillRect(x + 10, helmetY + 6, 2, 1);
+
+  ctx.fillStyle = "#1f2937";
+  ctx.fillRect(x + 8, legTopY, 2, legHeight);
+  ctx.fillRect(x + 12, legTopY, 2, legHeight);
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(x + 7, legTopY + legHeight - 1, 3, 2);
+  ctx.fillRect(x + 12, legTopY + legHeight - 1, 3, 2);
+
+  for (let index = 0; index < poleLength; index += 1) {
+    const diagonalOffset = Math.floor((index + 1) / 3);
+    const rowY = poleStartY + index;
+    const leftX = x + 6 - diagonalOffset;
+    const rightX = x + 16 + diagonalOffset;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(leftX, rowY, 1, 1);
+    ctx.fillRect(rightX, rowY, 1, 1);
+  }
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(x + 6, poleStartY, 1, 1);
+  ctx.fillRect(x + 15, poleStartY, 1, 1);
+  const poleTipY = poleStartY + poleLength - 1;
+  const poleTipOffset = Math.floor((poleLength + 1) / 3);
+  const leftPoleTipX = x + 6 - poleTipOffset;
+  const rightPoleTipX = x + 16 + poleTipOffset;
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(leftPoleTipX, poleTipY, 2, 1);
+  ctx.fillRect(rightPoleTipX, poleTipY, 2, 1);
+
+  for (let index = 0; index < skiSpread.length; index += 1) {
+    const spread = skiSpread[index] ?? 0;
+    const rowY = skiStartY + index;
+    const leftSkiX = x + 7 - spread;
+    const rightSkiX = x + 12 + spread;
+    ctx.fillStyle = "#334155";
+    ctx.fillRect(leftSkiX, rowY, 4, 1);
+    ctx.fillRect(rightSkiX, rowY, 4, 1);
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(leftSkiX + 3, rowY, 1, 1);
+    ctx.fillRect(rightSkiX + 3, rowY, 1, 1);
+    ctx.fillStyle = "#93c5fd";
+    ctx.fillRect(leftSkiX, rowY, 1, 1);
+    ctx.fillRect(rightSkiX, rowY, 1, 1);
+  }
+  const tipSpread = skiSpread[skiSpread.length - 1] ?? 0;
+  const skiTipY = skiStartY + skiSpread.length - 1;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.fillRect(x + 6 - tipSpread, skiTipY, 1, 1);
+  ctx.fillRect(x + 16 + tipSpread, skiTipY, 1, 1);
 }
 function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string, jumpOffset = 0): void {
   const inAir = jumpOffset > 0;
@@ -1446,6 +1648,14 @@ function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColo
   ctx.fillRect(x + 6 - tipSpread, skiTipY, 1, 1);
   ctx.fillRect(x + 16 + tipSpread, skiTipY, 1, 1);
 }
+function drawNakedSkier(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  drawSkier(ctx, x, y, "#f2c29b", "#fde68a");
+  ctx.fillStyle = "#d97706";
+  ctx.fillRect(x + 8, y + 21, 6, 2);
+  ctx.fillStyle = "#7c2d12";
+  ctx.fillRect(x + 8, y + 23, 2, 1);
+  ctx.fillRect(x + 12, y + 23, 2, 1);
+}
 function drawDowndraftZone(ctx: CanvasRenderingContext2D, x: number, y: number, pushDirection: 1 | -1): void {
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(x + 1, y + 1, 20, 2);
@@ -1477,7 +1687,18 @@ function drawDowndraftZone(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.fillRect(gustBaseX + 3 * pushDirection, y + 18, 1, 1);
   ctx.fillRect(gustBaseX + 5 * pushDirection, y + 21, 1, 1);
 }
-function drawAndy(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+function drawAndyShadow(ctx: CanvasRenderingContext2D, x: number, y: number, animationSeed = 0): void {
+  const pulse = Math.floor(animationSeed / 8) % 3;
+  const width = 14 + pulse;
+  const shadowX = x + 11 - Math.floor(width / 2);
+  const shadowY = y + 31;
+  ctx.fillStyle = "rgba(15, 23, 42, 0.22)";
+  ctx.fillRect(shadowX, shadowY, width, 2);
+  ctx.fillStyle = "rgba(15, 23, 42, 0.15)";
+  ctx.fillRect(shadowX + 2, shadowY + 2, Math.max(6, width - 4), 1);
+}
+function drawAndy(ctx: CanvasRenderingContext2D, x: number, y: number, animationSeed = 0): void {
+  const trailFrame = Math.floor(animationSeed / 6) % 3;
   ctx.fillStyle = "#7c2d12";
   ctx.fillRect(x + 1, y + 17, 22, 2);
   ctx.fillStyle = "#92400e";
@@ -1500,44 +1721,82 @@ function drawAndy(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   ctx.fillStyle = "#374151";
   ctx.fillRect(x + 9, y + 5, 6, 1);
   ctx.fillRect(x + 9, y + 13, 6, 2);
+
+  // Add air-trail cues to reinforce that Andy is flying above the slope.
+  ctx.fillStyle = trailFrame === 0 ? "rgba(125, 211, 252, 0.65)" : "rgba(56, 189, 248, 0.55)";
+  ctx.fillRect(x + 5, y + 21, 2, 3);
+  ctx.fillRect(x + 9, y + 22 + (trailFrame === 1 ? 1 : 0), 2, 3);
+  ctx.fillRect(x + 13, y + 21 + (trailFrame === 2 ? 1 : 0), 2, 3);
+  ctx.fillStyle = "rgba(186, 230, 253, 0.6)";
+  ctx.fillRect(x + 7, y + 25, 8, 1);
 }
 function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void {
+  // Crashed pose that still matches the slim skier proportions and palette.
+  ctx.fillStyle = "rgba(15, 23, 42, 0.22)";
+  ctx.fillRect(x + 4, y + 31, 16, 2);
+
+  ctx.fillStyle = "#334155";
+  ctx.fillRect(x + 2, y + 29, 22, 2);
+  ctx.fillRect(x + 10, y + 20, 2, 13);
+  ctx.fillStyle = "#111827";
+  ctx.fillRect(x + 3, y + 30, 20, 1);
+  ctx.fillRect(x + 11, y + 21, 1, 11);
+
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x + 2, y + 15, 20, 11);
+  ctx.fillRect(x + 5, y + 20, 14, 8);
   ctx.fillStyle = bodyColor;
-  ctx.fillRect(x + 3, y + 16, 18, 10);
-  ctx.fillStyle = "rgba(15, 23, 42, 0.25)";
-  ctx.fillRect(x + 11, y + 17, 8, 7);
+  ctx.fillRect(x + 6, y + 21, 12, 6);
+  ctx.fillStyle = "rgba(15, 23, 42, 0.3)";
+  ctx.fillRect(x + 12, y + 22, 4, 4);
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(x + 9, y + 27, 3, 2);
+  ctx.fillRect(x + 15, y + 27, 3, 2);
+
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x - 2, y + 11, 10, 10);
+  ctx.fillRect(x + 1, y + 17, 7, 7);
   ctx.fillStyle = helmetColor;
-  ctx.fillRect(x - 1, y + 12, 8, 7);
+  ctx.fillRect(x + 2, y + 18, 5, 5);
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x + 3, y + 14, 1, 4);
+  ctx.fillRect(x + 3, y + 20, 3, 2);
   ctx.fillStyle = "#cbd5e1";
-  ctx.fillRect(x + 1, y + 13, 4, 1);
-  ctx.fillStyle = "#1e293b";
-  ctx.fillRect(x + 1, y + 18, 4, 1);
-  ctx.fillStyle = "#264653";
-  ctx.fillRect(x - 2, y + 25, 28, 2);
-  ctx.fillRect(x + 8, y + 7, 2, 22);
-  ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x - 1, y + 26, 25, 1);
+  ctx.fillRect(x + 3, y + 19, 2, 1);
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(x + 20, y + 18, 1, 10);
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(x + 19, y + 27, 2, 1);
 }
-function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
+function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void {
+  const lift = Math.max(0, Math.min(28, jumpOffset));
+  const bodyShadowWidth = Math.max(4, Math.round(8 - lift / 6));
+  const bodyShadowX = x + 11 - Math.floor(bodyShadowWidth / 2);
+  const bodyShadowY = y + 25;
+  const skiShadowWidth = Math.max(2, Math.round(4 - lift / 10));
+  const skiSpread = Math.min(4, Math.floor(lift / 8));
+  const alphaBody = Math.max(0.12, 0.28 - lift * 0.005);
+  const alphaSkis = Math.max(0.08, 0.22 - lift * 0.004);
+
+  ctx.fillStyle = `rgba(15, 23, 42, ${alphaBody.toFixed(2)})`;
+  ctx.fillRect(bodyShadowX, bodyShadowY, bodyShadowWidth, 2);
+  ctx.fillStyle = `rgba(15, 23, 42, ${alphaSkis.toFixed(2)})`;
+  ctx.fillRect(x + 7 - skiSpread, bodyShadowY + 2, skiShadowWidth, 1);
+  ctx.fillRect(x + 16 + skiSpread - skiShadowWidth + 1, bodyShadowY + 2, skiShadowWidth, 1);
+  ctx.fillRect(x + 6 - skiSpread, bodyShadowY + 1, 1, 1);
+  ctx.fillRect(x + 17 + skiSpread, bodyShadowY + 1, 1, 1);
+}
 
 function drawImmortalForceField(ctx: CanvasRenderingContext2D, x: number, y: number, immortalMs: number): void {
   const flashOn = Math.floor(immortalMs / 110) % 2 === 0;
   if (!flashOn) {
     return;
   }
-  const fieldX = x - 4;
-  const fieldY = y - 4;
-  const fieldWidth = 32;
-  const fieldHeight = 36;
+  const fieldX = x - 6;
+  const fieldY = y - 6;
+  const fieldWidth = 36;
+  const fieldHeight = 40;
   const pulse = Math.floor(immortalMs / 220) % 2;
   ctx.fillStyle = pulse === 0 ? "rgba(34, 197, 94, 0.14)" : "rgba(74, 222, 128, 0.24)";
-  ctx.fillRect(fieldX + 3, fieldY + 3, fieldWidth - 6, fieldHeight - 6);
+  ctx.fillRect(fieldX + 4, fieldY + 4, fieldWidth - 8, fieldHeight - 8);
 
   ctx.fillStyle = pulse === 0 ? "rgba(22, 163, 74, 0.42)" : "rgba(74, 222, 128, 0.8)";
   ctx.fillRect(fieldX + 2, fieldY, fieldWidth - 4, 1);
@@ -1553,10 +1812,10 @@ function drawImmortalForceField(ctx: CanvasRenderingContext2D, x: number, y: num
   const sparkNodes: Array<[number, number]> = [
     [fieldX + 5, fieldY + 1],
     [fieldX + fieldWidth - 7, fieldY + 2],
-    [fieldX + fieldWidth - 3, fieldY + 15],
+    [fieldX + fieldWidth - 3, fieldY + 16],
     [fieldX + fieldWidth - 11, fieldY + fieldHeight - 3],
     [fieldX + 8, fieldY + fieldHeight - 2],
-    [fieldX + 1, fieldY + 18]
+    [fieldX + 1, fieldY + 19]
   ];
   ctx.fillStyle = pulse === 0 ? "rgba(187, 247, 208, 0.7)" : "rgba(240, 253, 244, 0.95)";
   for (let index = 0; index < 3; index += 1) {
