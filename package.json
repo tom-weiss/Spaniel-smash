@@ -1,0 +1,12 @@
+{
+  "name": "spaniel-smash",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit && eslint tests/**/*.js",
+    "test": "npm run build && node --test --experimental-test-coverage tests/game.test.js",
+    "dev": "python3 -m http.server 4173"
+  }
+}
