@@ -105,6 +105,13 @@ export interface GameSnapshot {
   effects: ReadonlyArray<SmashEffect>;
 }
 
+interface Bounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export class SpanielSmashGame {
   private width: number;
   private height: number;
@@ -283,7 +290,7 @@ export class SpanielSmashGame {
   }
 
   private resolveCollisions(): void {
-    const player = { x: this.playerX(), y: this.playerY() - this.playerJumpOffset(), width: this.laneWidth * 0.56, height: 34 };
+    const player = this.playerCollisionBounds();
     const survivors: Entity[] = [];
 
     for (const entity of this.entities) {
@@ -292,7 +299,7 @@ export class SpanielSmashGame {
         continue;
       }
 
-      if (!intersects(player, entity)) {
+      if (!intersects(player, this.entityCollisionBounds(entity))) {
         survivors.push(entity);
         continue;
       }
@@ -327,6 +334,42 @@ export class SpanielSmashGame {
     }
 
     this.entities = survivors;
+  }
+
+  private playerCollisionBounds(): Bounds {
+    const x = this.playerX();
+    const y = this.playerY() - this.playerJumpOffset();
+    const width = this.laneWidth * 0.56;
+    const height = 34;
+    return {
+      x: x + width * 0.08,
+      y: y + 2,
+      width: width * 0.84,
+      height: height - 4
+    };
+  }
+
+  private entityCollisionBounds(entity: Entity): Bounds {
+    const bounds = { x: entity.x, y: entity.y, width: entity.width, height: entity.height };
+    if (entity.type === "rock") {
+      return {
+        x: bounds.x + bounds.width * 0.12,
+        y: bounds.y + bounds.height * 0.18,
+        width: bounds.width * 0.76,
+        height: bounds.height * 0.58
+      };
+    }
+
+    if (entity.type === "tree") {
+      return {
+        x: bounds.x + bounds.width * 0.06,
+        y: bounds.y + bounds.height * 0.1,
+        width: bounds.width * 0.88,
+        height: bounds.height * 0.86
+      };
+    }
+
+    return bounds;
   }
 
   private resolveEntityCollisions(): void { /* unchanged below */
@@ -554,6 +597,10 @@ export class PixelRenderer {
       else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y);
       else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
       else drawWitch(this.ctx, entity.x, entity.y);
+
+      if (entity.obstacleId) {
+        drawObstacleLabel(this.ctx, entity.x, entity.y, entity.obstacleId);
+      }
     }
 
     for (const effect of snapshot.effects) drawSmashEffect(this.ctx, effect);
@@ -618,6 +665,14 @@ function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColo
   ctx.fillRect(x + skiInset, y + 25, skiWidth, 2);
 }
 function drawWitch(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 2, y + 17, 20, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 17, y + 16, 3, 3); }
+function drawObstacleLabel(ctx: CanvasRenderingContext2D, x: number, y: number, obstacleId: string): void {
+  const label = obstacleId.split("-").slice(0, 2).join(" ").toUpperCase();
+  ctx.fillStyle = "rgba(15, 23, 42, 0.82)";
+  ctx.fillRect(x - 2, y - 11, 52, 8);
+  ctx.fillStyle = "#bfdbfe";
+  ctx.font = "6px monospace";
+  ctx.fillText(label.slice(0, 11), x, y - 5);
+}
 function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
 function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
 
