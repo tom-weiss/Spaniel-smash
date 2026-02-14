@@ -153,6 +153,7 @@ class SkiMusic {
 }
 const FRIENDLY_SPANIEL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230f172a'/%3E%3Crect x='5' y='8' width='12' height='8' fill='%23f4a261'/%3E%3Crect x='15' y='6' width='6' height='6' fill='%23f4a261'/%3E%3Crect x='16' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='18' y='10' width='2' height='2' fill='%23000000'/%3E%3Crect x='19' y='5' width='2' height='6' fill='%238b5a2b'/%3E%3Crect x='4' y='9' width='2' height='5' fill='%238b5a2b'/%3E%3Crect x='8' y='16' width='2' height='4' fill='%23d97706'/%3E%3Crect x='13' y='16' width='2' height='4' fill='%23d97706'/%3E%3C/svg%3E";
 const GRINNING_SPANIEL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%230f172a'/%3E%3Crect x='5' y='8' width='12' height='8' fill='%23f4a261'/%3E%3Crect x='15' y='6' width='6' height='6' fill='%23f4a261'/%3E%3Crect x='16' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='18' y='8' width='2' height='2' fill='%23000000'/%3E%3Crect x='17' y='11' width='3' height='2' fill='%23ffffff'/%3E%3Crect x='16' y='13' width='5' height='1' fill='%23000000'/%3E%3Crect x='19' y='5' width='2' height='6' fill='%238b5a2b'/%3E%3Crect x='4' y='9' width='2' height='5' fill='%238b5a2b'/%3E%3Crect x='8' y='16' width='2' height='4' fill='%23d97706'/%3E%3Crect x='13' y='16' width='2' height='4' fill='%23d97706'/%3E%3C/svg%3E";
+const GAME_VERSION = "v1.0.2";
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
@@ -186,14 +187,14 @@ function showSplash(mode) {
     }
     splashScreen.classList.remove("hidden");
     if (mode === "start") {
-        splashTitle.textContent = "SPANIEL SMASH";
-        splashCopy.textContent = "Arrow keys or tap controls move left/right. Smash spaniels to score. Trees block you. Dodge rocks, skiers, and witch Andy.";
+        splashTitle.textContent = `SPANIEL SMASH ${GAME_VERSION}`;
+        splashCopy.textContent = "Arrow keys or tap controls move left/right. Smash spaniels to score. Trees block you. Dodge rocks, skiers, and watch out for Andy.";
         splashButton.textContent = "START";
         splashImage.src = FRIENDLY_SPANIEL;
         splashImage.alt = "Pixel art spaniel";
         return;
     }
-    splashTitle.textContent = "GAME OVER";
+    splashTitle.textContent = `GAME OVER ${GAME_VERSION}`;
     splashCopy.textContent = "Grrr! The spaniel wins this round. Hit restart and smash them all again.";
     splashButton.textContent = "RESTART";
     splashImage.src = GRINNING_SPANIEL;
