@@ -83,13 +83,22 @@ export class SpanielSmashGame {
     static andyBossLaneMoveMs = 240;
     static andyBossThrowMinMs = 820;
     static andyBossThrowMaxMs = 1500;
+    static andyBossThrowMinFloorMs = 260;
+    static andyBossThrowRangeFloorMs = 180;
+    static andyThrowLevelReductionMs = 70;
     static andyBossBonusScore = 1800;
+    static entityCullMarginPx = 40;
     static levelStartImmortalMs = 2600;
     static respawnImmortalMs = 2200;
-    static levelUpBannerDurationMs = 1400;
+    static levelUpBannerDurationMs = 1800;
     static levelTransitionBoostDurationMs = 3800;
     static levelTransitionSpawnIntervalMs = 300;
-    static baseSpawnIntervalMs = 450;
+    static levelTransitionSpawnFloorMs = 210;
+    static levelOneBaseSpawnIntervalMs = 540;
+    static spawnIntervalLevelStepMs = 32;
+    static minSpawnIntervalMs = 240;
+    static levelOneStandardSpanielChance = 0.56;
+    static levelSpeedStepMultiplier = 0.22;
     static levelTransitionScrollMultiplier = 1.2;
     static pooBagSpeed = 2.8;
     static pooBagWidthScale = 0.34;
@@ -134,7 +143,7 @@ export class SpanielSmashGame {
             this.spawnClock -= spawnIntervalMs;
             this.spawnEntity();
         }
-        const speedMultiplier = (1 + (this.speedLevel - 1) * 0.2) * this.currentScrollSpeedMultiplier();
+        const speedMultiplier = this.currentLevelSpeedMultiplier() * this.currentScrollSpeedMultiplier();
         this.sideObstacleOffsetY += SpanielSmashGame.staticObstacleSpeed * speedMultiplier * (deltaMs / 16.67);
         for (const entity of this.entities) {
             this.tickEntityBehaviorState(entity, deltaMs);
@@ -142,13 +151,14 @@ export class SpanielSmashGame {
             entity.y += entity.speed * (entity.direction ?? 1) * speedMultiplier * (deltaMs / 16.67);
             entity.x = this.laneX(this.entityLane(entity));
             entity.crashAnimationMs = Math.max(0, (entity.crashAnimationMs ?? 0) - deltaMs);
+            this.maybeCompleteBossFromOffscreenExit(entity);
         }
         this.applyDowndraftPushes();
         this.resolveEntityCollisions();
         this.resolveCollisions();
         this.maybeStartBossEncounter();
         this.handleBossExitState();
-        this.entities = this.entities.filter((entity) => entity.y < this.height + 40 && entity.y + entity.height > -40);
+        this.entities = this.entities.filter((entity) => entity.y < this.height + SpanielSmashGame.entityCullMarginPx && entity.y + entity.height > -SpanielSmashGame.entityCullMarginPx);
     }
     handleInput(input, deltaMs) {
         this.laneSwitchCooldownMs = Math.max(0, this.laneSwitchCooldownMs - deltaMs);
@@ -194,11 +204,15 @@ export class SpanielSmashGame {
             * Math.pow(SpanielSmashGame.iceScrollSpeedMultiplier, iceStacks);
         return Math.max(0.35, Math.min(2.5, levelTransition * effectSpeed));
     }
+    currentLevelSpeedMultiplier() {
+        return 1 + (this.speedLevel - 1) * SpanielSmashGame.levelSpeedStepMultiplier;
+    }
     currentSpawnIntervalMs() {
+        const baselineSpawnInterval = Math.max(SpanielSmashGame.minSpawnIntervalMs, SpanielSmashGame.levelOneBaseSpawnIntervalMs - (this.speedLevel - 1) * SpanielSmashGame.spawnIntervalLevelStepMs);
         if (this.levelTransitionBoostMs > 0) {
-            return SpanielSmashGame.levelTransitionSpawnIntervalMs;
+            return Math.max(SpanielSmashGame.levelTransitionSpawnFloorMs, Math.min(SpanielSmashGame.levelTransitionSpawnIntervalMs, baselineSpawnInterval - 80));
         }
-        return SpanielSmashGame.baseSpawnIntervalMs;
+        return baselineSpawnInterval;
     }
     effectStacks(ms, durationMs) {
         if (ms <= 0) {
@@ -236,9 +250,27 @@ export class SpanielSmashGame {
         this.spawnTieredObstacle("standard", spawnLane, spawnX, movingDirection, movingSpawnY);
     }
     spawnTieredObstacle(tier, spawnLane, spawnX, movingDirection, movingSpawnY) {
-        const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
-        const template = templates[Math.floor(this.rng() * templates.length)] ?? templates[0];
+        const template = this.pickTemplateForTier(tier);
         this.entities.push(this.makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY));
+    }
+    pickTemplateForTier(tier) {
+        const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
+        const roll = this.rng();
+        if (tier === "standard" && this.speedLevel === 1) {
+            const spanielTemplates = templates.filter((template) => template.type === "spaniel");
+            const nonSpanielTemplates = templates.filter((template) => template.type !== "spaniel");
+            if (spanielTemplates.length > 0 && nonSpanielTemplates.length > 0) {
+                if (roll < SpanielSmashGame.levelOneStandardSpanielChance) {
+                    const spanielProgress = roll / SpanielSmashGame.levelOneStandardSpanielChance;
+                    const spanielIndex = Math.min(spanielTemplates.length - 1, Math.floor(spanielProgress * spanielTemplates.length));
+                    return spanielTemplates[spanielIndex] ?? templates[0];
+                }
+                const nonSpanielProgress = (roll - SpanielSmashGame.levelOneStandardSpanielChance) / (1 - SpanielSmashGame.levelOneStandardSpanielChance);
+                const nonSpanielIndex = Math.min(nonSpanielTemplates.length - 1, Math.floor(nonSpanielProgress * nonSpanielTemplates.length));
+                return nonSpanielTemplates[nonSpanielIndex] ?? templates[0];
+            }
+        }
+        return templates[Math.floor(roll * templates.length)] ?? templates[0];
     }
     makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY) {
         const behaviorState = this.createBehaviorState(template.type, movingDirection);
@@ -325,6 +357,8 @@ export class SpanielSmashGame {
             this.score += SpanielSmashGame.andyBossBonusScore;
         }
         this.speedLevel += 1;
+        this.lives = 3;
+        this.crashFreezeMs = 0;
         this.levelSpanielsSmashed = 0;
         this.nextBossSpanielGoal = 10 + ((this.speedLevel - 1) % 6);
         this.levelUpBannerMs = SpanielSmashGame.levelUpBannerDurationMs;
@@ -354,8 +388,19 @@ export class SpanielSmashGame {
     rollSuperRareSpawnMs() { return 60000 + Math.floor(this.rng() * 540001); }
     rollMythicSpawnMs() { return 30000 + Math.floor(this.rng() * 60001); }
     rollAndyThrowCooldownMs() {
-        const span = SpanielSmashGame.andyBossThrowMaxMs - SpanielSmashGame.andyBossThrowMinMs;
-        return SpanielSmashGame.andyBossThrowMinMs + Math.floor(this.rng() * (span + 1));
+        const reductionMs = (this.speedLevel - 1) * SpanielSmashGame.andyThrowLevelReductionMs;
+        const minThrowMs = Math.max(SpanielSmashGame.andyBossThrowMinFloorMs, SpanielSmashGame.andyBossThrowMinMs - reductionMs);
+        const maxThrowMs = Math.max(minThrowMs + SpanielSmashGame.andyBossThrowRangeFloorMs, SpanielSmashGame.andyBossThrowMaxMs - reductionMs);
+        const span = maxThrowMs - minThrowMs;
+        return minThrowMs + Math.floor(this.rng() * (span + 1));
+    }
+    maybeCompleteBossFromOffscreenExit(entity) {
+        if (!this.andyBossActive || entity.type !== "andy" || entity.behaviorState?.kind !== "andyBoss") {
+            return;
+        }
+        if (entity.y > this.height + SpanielSmashGame.entityCullMarginPx || entity.y + entity.height < -SpanielSmashGame.entityCullMarginPx) {
+            this.completeBossEncounter(false);
+        }
     }
     tickRuntimeTimers(deltaMs) {
         this.puddleSlowMs = Math.max(0, this.puddleSlowMs - deltaMs);
@@ -413,9 +458,6 @@ export class SpanielSmashGame {
             }
             entity.speed = SpanielSmashGame.andyBossExitSpeed;
             entity.direction = 1;
-            if (entity.y > this.height + 42) {
-                this.completeBossEncounter(false);
-            }
         }
     }
     applyDowndraftPushes() {
@@ -620,7 +662,9 @@ export class SpanielSmashGame {
             };
         }
     }
-    isMovingObstacle(entity) { return entity.type === "skier" || entity.type === "spaniel" || entity.type === "helicopter-downdraft"; }
+    isMovingObstacle(entity) {
+        return entity.type === "skier" || entity.type === "spaniel" || entity.type === "helicopter-downdraft";
+    }
     spawnSmashEffect(x, y, kind) { this.effects.push({ kind, x, y, ttlMs: 300, maxTtlMs: 300 }); }
     spawnBloodstain(entity) {
         this.entities.push({ id: this.nextEntityId++, type: "bloodstain", x: this.laneX(this.entityLane(entity)), y: entity.y + entity.height + 4, width: this.laneWidth * 0.55, height: 18, speed: SpanielSmashGame.staticObstacleSpeed, lane: this.entityLane(entity), laneSwitchCooldownMs: 0, direction: 1, crashAnimationMs: 0 });
@@ -797,6 +841,7 @@ export class PixelRenderer {
     ctx;
     width;
     height;
+    static levelUpAnimationDurationMs = 1800;
     constructor(ctx, width, height) {
         this.ctx = ctx;
         this.width = width;
@@ -873,8 +918,14 @@ export class PixelRenderer {
             this.ctx.fillText(`Lives Left ${snapshot.lives}`, this.width / 2 - 72, 120);
         }
         if ((snapshot.levelUpBannerMs ?? 0) > 0 && !snapshot.isGameOver) {
-            this.ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-            this.ctx.fillRect(this.width / 2 - 112, 136, 224, 34);
+            this.drawLevelUpCelebration(snapshot.levelUpBannerMs ?? 0);
+            const pulse = 0.7 + Math.abs(Math.sin((snapshot.levelUpBannerMs ?? 0) / 90)) * 0.3;
+            const bannerWidth = Math.round(214 + pulse * 18);
+            const bannerX = Math.round(this.width / 2 - bannerWidth / 2);
+            this.ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+            this.ctx.fillRect(bannerX, 132, bannerWidth, 40);
+            this.ctx.fillStyle = "#fef08a";
+            this.ctx.fillRect(bannerX + 6, 136, bannerWidth - 12, 2);
             this.ctx.fillStyle = "#86efac";
             this.ctx.fillText(`LEVEL ${snapshot.speedLevel}!`, this.width / 2 - 66, 158);
         }
@@ -896,6 +947,26 @@ export class PixelRenderer {
             else {
                 drawRock(this.ctx, placement.x, placement.y);
             }
+        }
+    }
+    drawLevelUpCelebration(levelUpBannerMs) {
+        const clampedMs = Math.max(0, Math.min(PixelRenderer.levelUpAnimationDurationMs, levelUpBannerMs));
+        const progress = 1 - clampedMs / PixelRenderer.levelUpAnimationDurationMs;
+        const centerX = this.width / 2;
+        const centerY = 152;
+        const ringRadius = 12 + progress * 74;
+        const sparkleRadius = 20 + progress * 52;
+        const glowAlpha = Math.max(0.18, 0.7 - progress * 0.46);
+        const sparkleAlpha = Math.max(0.16, 0.64 - progress * 0.34);
+        this.ctx.fillStyle = `rgba(134, 239, 172, ${glowAlpha.toFixed(2)})`;
+        this.ctx.fillRect(Math.round(centerX - ringRadius), centerY - 2, Math.round(ringRadius * 2), 4);
+        this.ctx.fillRect(Math.round(centerX - 2), Math.round(centerY - ringRadius), 4, Math.round(ringRadius * 2));
+        this.ctx.fillStyle = `rgba(250, 204, 21, ${sparkleAlpha.toFixed(2)})`;
+        for (let index = 0; index < 8; index += 1) {
+            const angle = progress * 2.4 + (Math.PI * 2 * index) / 8;
+            const sparkleX = centerX + Math.cos(angle) * sparkleRadius;
+            const sparkleY = centerY + Math.sin(angle) * sparkleRadius;
+            this.ctx.fillRect(Math.round(sparkleX) - 1, Math.round(sparkleY) - 1, 3, 3);
         }
     }
     computeSlopeEdgeDecorations(offsetY) {

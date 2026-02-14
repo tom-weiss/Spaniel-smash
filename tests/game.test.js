@@ -26,8 +26,8 @@ test('player movement is lane-limited and avoids side trees', () => {
 
 test('spawned moving obstacles stay in playable lanes', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.99, 0.2, 0.99, 0.2]), 10);
-  game.step(450, { left: false, right: false });
-  game.step(450, { left: false, right: false });
+  game.step(540, { left: false, right: false });
+  game.step(540, { left: false, right: false });
 
   const lanes = game.snapshot().entities.map((entity) => entity.lane);
   assert.ok(lanes.every((lane) => lane >= 2 && lane <= 7));
@@ -168,7 +168,7 @@ test('spawn lane fallback chooses nearest clear lane', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.3, 0.1]), 10);
   game.forceSpawn({ type: 'tree', x: 100, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
   game.forceSpawn({ type: 'rock', x: 130, y: 0, width: 10, height: 10, speed: 2.2, lane: 4 });
-  game.step(450, { left: false, right: false });
+  game.step(540, { left: false, right: false });
 
   const spawned = game.snapshot().entities.at(-1);
   assert.equal(spawned.lane, 2);
@@ -298,7 +298,7 @@ test('trees cannot be cleared by jump', () => {
 
 test('spawn branches include obstacle ids from brainstorming catalog', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.2, 0.2, 0.6, 0.2]), 10);
-  game.step(450, { left: false, right: false });
+  game.step(540, { left: false, right: false });
 
   const first = game.snapshot().entities[0];
   assert.ok(first.obstacleId);
@@ -466,14 +466,57 @@ test('andy boss throws poo bags and level completes when boss exits', () => {
   game.step(700, { left: false, right: false });
   const boss = game.entities.find((entity) => entity.type === 'andy' && entity.behaviorState?.kind === 'andyBoss');
   assert.ok(boss);
-  boss.behaviorState.phase = 'exiting';
+  boss.behaviorState.phase = 'hovering';
   boss.y = 660;
 
   game.step(16, { left: false, right: false });
   const afterExit = game.snapshot();
   assert.equal(afterExit.isBossActive, false);
   assert.equal(afterExit.speedLevel, 2);
+  assert.equal(afterExit.lives, 3);
   assert.ok(afterExit.levelUpBannerMs > 0);
+});
+
+test('andy exit crossing cull boundary in same frame still levels up', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.andyBossActive = true;
+  game.forceSpawn({
+    type: 'andy',
+    obstacleId: 'andy-boss',
+    jumpRule: 'high',
+    behaviorState: { kind: 'andyBoss', phase: 'exiting', phaseMs: 0, throwCooldownMs: 9999 },
+    x: 122,
+    y: 639,
+    width: 28,
+    height: 34,
+    speed: 0,
+    lane: 5,
+    laneSwitchCooldownMs: 0
+  });
+
+  game.step(16, { left: false, right: false });
+  const snap = game.snapshot();
+  assert.equal(snap.isBossActive, false);
+  assert.equal(snap.speedLevel, 2);
+  assert.equal(snap.lives, 3);
+});
+
+test('level one standard spawns bias toward spaniels and higher levels spawn more entities', () => {
+  const levelOne = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.2, 0.2, 0.2]), 10);
+  levelOne.step(540, { left: false, right: false });
+  const firstSpawn = levelOne.snapshot().entities[0];
+  assert.equal(firstSpawn.type, 'spaniel');
+
+  const lowLevel = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  const highLevel = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  highLevel.speedLevel = 5;
+
+  for (let i = 0; i < 20; i += 1) {
+    lowLevel.step(120, { left: false, right: false });
+    highLevel.step(120, { left: false, right: false });
+  }
+
+  assert.ok(highLevel.nextEntityId > lowLevel.nextEntityId);
 });
 
 test('helicopter downdraft pushes the player lane on its pulse interval', () => {
@@ -538,28 +581,28 @@ test('jumping clears jump-rule obstacles and rare/super-rare cadence spawns expe
 
   const rareGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
   rareGame.nextRareSpawnMs = 450;
-  rareGame.step(450, { left: false, right: false });
+  rareGame.step(540, { left: false, right: false });
   assert.ok(rareGame.snapshot().entities.some((entity) => entity.obstacleTier === 'rare'));
 
   const superRareGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.8]), 10);
   superRareGame.nextSuperRareSpawnMs = 450;
-  superRareGame.step(450, { left: false, right: false });
+  superRareGame.step(540, { left: false, right: false });
   assert.ok(superRareGame.snapshot().entities.some((entity) => entity.obstacleTier === 'super-rare'));
 });
 
 test('tiered spawns hit standard/rare/super-rare/mythic cadence branches', () => {
   const standardGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.2, 0.05, 0.2, 0.2]), 10);
-  standardGame.step(450, { left: false, right: false });
+  standardGame.step(540, { left: false, right: false });
   assert.ok(standardGame.snapshot().entities.some((entity) => entity.obstacleTier === 'standard'));
 
   const rareGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
   rareGame.nextRareSpawnMs = 450;
-  rareGame.step(450, { left: false, right: false });
+  rareGame.step(540, { left: false, right: false });
   assert.ok(rareGame.snapshot().entities.some((entity) => entity.obstacleTier === 'rare'));
 
   const superGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
   superGame.nextSuperRareSpawnMs = 450;
-  superGame.step(450, { left: false, right: false });
+  superGame.step(540, { left: false, right: false });
   assert.ok(superGame.snapshot().entities.some((entity) => entity.obstacleTier === 'super-rare'));
 
   const mythicGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2, 0.2]), 10);
@@ -569,16 +612,17 @@ test('tiered spawns hit standard/rare/super-rare/mythic cadence branches', () =>
   }
   mythicGame.forceSpawn({ type: 'andy', x: 122, y: 20, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
   mythicGame.nextMythicSpawnMs = 450;
-  mythicGame.step(450, { left: false, right: false });
+  mythicGame.step(540, { left: false, right: false });
   assert.ok(mythicGame.snapshot().entities.some((entity) => entity.obstacleTier === 'mythic'));
 });
 
 
 test('spawn lane fallback can choose right lane and lane blocking check can reject move', () => {
   const spawnRightGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2]), 10);
+  spawnRightGame.speedLevel = 2;
   spawnRightGame.forceSpawn({ type: 'tree', x: 60, y: 0, width: 10, height: 10, speed: 2.2, lane: 2 });
   spawnRightGame.forceSpawn({ type: 'rock', x: 90, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
-  spawnRightGame.step(450, { left: false, right: false });
+  spawnRightGame.step(540, { left: false, right: false });
   assert.equal(spawnRightGame.snapshot().entities.at(-1).lane, 4);
 
   const laneBlockGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.9, 0.6]), 10);
@@ -593,7 +637,7 @@ test('spawn lane fallback can choose right lane and lane blocking check can reje
 test('lane switching and spawn lane fallback exercise left-priority and blocked-lane checks', () => {
   const leftSpawnGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.3, 0.2]), 10);
   leftSpawnGame.forceSpawn({ type: 'tree', x: 100, y: 0, width: 10, height: 10, speed: 2.2, lane: 3 });
-  leftSpawnGame.step(450, { left: false, right: false });
+  leftSpawnGame.step(540, { left: false, right: false });
   assert.equal(leftSpawnGame.snapshot().entities.at(-1).lane, 2);
 
   const blockedLaneGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.1, 0.1]), 10);
@@ -606,7 +650,7 @@ test('lane switching and spawn lane fallback exercise left-priority and blocked-
 test('spawn lane can return preferred when all lanes are blocked', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0, 0.2]), 3);
   game.forceSpawn({ type: 'tree', x: 10, y: 0, width: 10, height: 10, speed: 0, lane: 1 });
-  game.step(450, { left: false, right: false });
+  game.step(540, { left: false, right: false });
   const spawned = game.snapshot().entities.at(-1);
   assert.equal(spawned.lane, 1);
 });

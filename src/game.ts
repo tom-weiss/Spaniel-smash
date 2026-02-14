@@ -191,13 +191,22 @@ export class SpanielSmashGame {
   private static readonly andyBossLaneMoveMs = 240;
   private static readonly andyBossThrowMinMs = 820;
   private static readonly andyBossThrowMaxMs = 1500;
+  private static readonly andyBossThrowMinFloorMs = 260;
+  private static readonly andyBossThrowRangeFloorMs = 180;
+  private static readonly andyThrowLevelReductionMs = 70;
   private static readonly andyBossBonusScore = 1800;
+  private static readonly entityCullMarginPx = 40;
   private static readonly levelStartImmortalMs = 2600;
   private static readonly respawnImmortalMs = 2200;
-  private static readonly levelUpBannerDurationMs = 1400;
+  private static readonly levelUpBannerDurationMs = 1800;
   private static readonly levelTransitionBoostDurationMs = 3800;
   private static readonly levelTransitionSpawnIntervalMs = 300;
-  private static readonly baseSpawnIntervalMs = 450;
+  private static readonly levelTransitionSpawnFloorMs = 210;
+  private static readonly levelOneBaseSpawnIntervalMs = 540;
+  private static readonly spawnIntervalLevelStepMs = 32;
+  private static readonly minSpawnIntervalMs = 240;
+  private static readonly levelOneStandardSpanielChance = 0.56;
+  private static readonly levelSpeedStepMultiplier = 0.22;
   private static readonly levelTransitionScrollMultiplier = 1.2;
   private static readonly pooBagSpeed = 2.8;
   private static readonly pooBagWidthScale = 0.34;
@@ -248,7 +257,7 @@ export class SpanielSmashGame {
       this.spawnEntity();
     }
 
-    const speedMultiplier = (1 + (this.speedLevel - 1) * 0.2) * this.currentScrollSpeedMultiplier();
+    const speedMultiplier = this.currentLevelSpeedMultiplier() * this.currentScrollSpeedMultiplier();
     this.sideObstacleOffsetY += SpanielSmashGame.staticObstacleSpeed * speedMultiplier * (deltaMs / 16.67);
     for (const entity of this.entities) {
       this.tickEntityBehaviorState(entity, deltaMs);
@@ -256,6 +265,7 @@ export class SpanielSmashGame {
       entity.y += entity.speed * (entity.direction ?? 1) * speedMultiplier * (deltaMs / 16.67);
       entity.x = this.laneX(this.entityLane(entity));
       entity.crashAnimationMs = Math.max(0, (entity.crashAnimationMs ?? 0) - deltaMs);
+      this.maybeCompleteBossFromOffscreenExit(entity);
     }
 
     this.applyDowndraftPushes();
@@ -263,7 +273,7 @@ export class SpanielSmashGame {
     this.resolveCollisions();
     this.maybeStartBossEncounter();
     this.handleBossExitState();
-    this.entities = this.entities.filter((entity) => entity.y < this.height + 40 && entity.y + entity.height > -40);
+    this.entities = this.entities.filter((entity) => entity.y < this.height + SpanielSmashGame.entityCullMarginPx && entity.y + entity.height > -SpanielSmashGame.entityCullMarginPx);
   }
 
   private handleInput(input: InputState, deltaMs: number): void {
@@ -316,11 +326,22 @@ export class SpanielSmashGame {
     return Math.max(0.35, Math.min(2.5, levelTransition * effectSpeed));
   }
 
+  private currentLevelSpeedMultiplier(): number {
+    return 1 + (this.speedLevel - 1) * SpanielSmashGame.levelSpeedStepMultiplier;
+  }
+
   private currentSpawnIntervalMs(): number {
+    const baselineSpawnInterval = Math.max(
+      SpanielSmashGame.minSpawnIntervalMs,
+      SpanielSmashGame.levelOneBaseSpawnIntervalMs - (this.speedLevel - 1) * SpanielSmashGame.spawnIntervalLevelStepMs
+    );
     if (this.levelTransitionBoostMs > 0) {
-      return SpanielSmashGame.levelTransitionSpawnIntervalMs;
+      return Math.max(
+        SpanielSmashGame.levelTransitionSpawnFloorMs,
+        Math.min(SpanielSmashGame.levelTransitionSpawnIntervalMs, baselineSpawnInterval - 80)
+      );
     }
-    return SpanielSmashGame.baseSpawnIntervalMs;
+    return baselineSpawnInterval;
   }
 
   private effectStacks(ms: number, durationMs: number): number {
@@ -366,9 +387,28 @@ export class SpanielSmashGame {
   }
 
   private spawnTieredObstacle(tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): void {
-    const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
-    const template = templates[Math.floor(this.rng() * templates.length)] ?? templates[0];
+    const template = this.pickTemplateForTier(tier);
     this.entities.push(this.makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY));
+  }
+
+  private pickTemplateForTier(tier: ObstacleTier): ObstacleTemplate {
+    const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
+    const roll = this.rng();
+    if (tier === "standard" && this.speedLevel === 1) {
+      const spanielTemplates = templates.filter((template) => template.type === "spaniel");
+      const nonSpanielTemplates = templates.filter((template) => template.type !== "spaniel");
+      if (spanielTemplates.length > 0 && nonSpanielTemplates.length > 0) {
+        if (roll < SpanielSmashGame.levelOneStandardSpanielChance) {
+          const spanielProgress = roll / SpanielSmashGame.levelOneStandardSpanielChance;
+          const spanielIndex = Math.min(spanielTemplates.length - 1, Math.floor(spanielProgress * spanielTemplates.length));
+          return spanielTemplates[spanielIndex] ?? templates[0];
+        }
+        const nonSpanielProgress = (roll - SpanielSmashGame.levelOneStandardSpanielChance) / (1 - SpanielSmashGame.levelOneStandardSpanielChance);
+        const nonSpanielIndex = Math.min(nonSpanielTemplates.length - 1, Math.floor(nonSpanielProgress * nonSpanielTemplates.length));
+        return nonSpanielTemplates[nonSpanielIndex] ?? templates[0];
+      }
+    }
+    return templates[Math.floor(roll * templates.length)] ?? templates[0];
   }
 
   private makeEntityFromTemplate(template: ObstacleTemplate, tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): Entity {
@@ -461,6 +501,8 @@ export class SpanielSmashGame {
       this.score += SpanielSmashGame.andyBossBonusScore;
     }
     this.speedLevel += 1;
+    this.lives = 3;
+    this.crashFreezeMs = 0;
     this.levelSpanielsSmashed = 0;
     this.nextBossSpanielGoal = 10 + ((this.speedLevel - 1) % 6);
     this.levelUpBannerMs = SpanielSmashGame.levelUpBannerDurationMs;
@@ -492,8 +534,20 @@ export class SpanielSmashGame {
   private rollSuperRareSpawnMs(): number { return 60000 + Math.floor(this.rng() * 540001); }
   private rollMythicSpawnMs(): number { return 30000 + Math.floor(this.rng() * 60001); }
   private rollAndyThrowCooldownMs(): number {
-    const span = SpanielSmashGame.andyBossThrowMaxMs - SpanielSmashGame.andyBossThrowMinMs;
-    return SpanielSmashGame.andyBossThrowMinMs + Math.floor(this.rng() * (span + 1));
+    const reductionMs = (this.speedLevel - 1) * SpanielSmashGame.andyThrowLevelReductionMs;
+    const minThrowMs = Math.max(SpanielSmashGame.andyBossThrowMinFloorMs, SpanielSmashGame.andyBossThrowMinMs - reductionMs);
+    const maxThrowMs = Math.max(minThrowMs + SpanielSmashGame.andyBossThrowRangeFloorMs, SpanielSmashGame.andyBossThrowMaxMs - reductionMs);
+    const span = maxThrowMs - minThrowMs;
+    return minThrowMs + Math.floor(this.rng() * (span + 1));
+  }
+
+  private maybeCompleteBossFromOffscreenExit(entity: Entity): void {
+    if (!this.andyBossActive || entity.type !== "andy" || entity.behaviorState?.kind !== "andyBoss") {
+      return;
+    }
+    if (entity.y > this.height + SpanielSmashGame.entityCullMarginPx || entity.y + entity.height < -SpanielSmashGame.entityCullMarginPx) {
+      this.completeBossEncounter(false);
+    }
   }
 
   private tickRuntimeTimers(deltaMs: number): void {
@@ -559,9 +613,6 @@ export class SpanielSmashGame {
 
       entity.speed = SpanielSmashGame.andyBossExitSpeed;
       entity.direction = 1;
-      if (entity.y > this.height + 42) {
-        this.completeBossEncounter(false);
-      }
     }
   }
 
@@ -983,6 +1034,7 @@ export class PixelRenderer {
   private ctx: CanvasRenderingContext2D;
   private width: number;
   private height: number;
+  private static readonly levelUpAnimationDurationMs = 1800;
 
   constructor(ctx: CanvasRenderingContext2D, width: number, height: number) {
     this.ctx = ctx;
@@ -1050,8 +1102,14 @@ export class PixelRenderer {
     }
 
     if ((snapshot.levelUpBannerMs ?? 0) > 0 && !snapshot.isGameOver) {
-      this.ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-      this.ctx.fillRect(this.width / 2 - 112, 136, 224, 34);
+      this.drawLevelUpCelebration(snapshot.levelUpBannerMs ?? 0);
+      const pulse = 0.7 + Math.abs(Math.sin((snapshot.levelUpBannerMs ?? 0) / 90)) * 0.3;
+      const bannerWidth = Math.round(214 + pulse * 18);
+      const bannerX = Math.round(this.width / 2 - bannerWidth / 2);
+      this.ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+      this.ctx.fillRect(bannerX, 132, bannerWidth, 40);
+      this.ctx.fillStyle = "#fef08a";
+      this.ctx.fillRect(bannerX + 6, 136, bannerWidth - 12, 2);
       this.ctx.fillStyle = "#86efac";
       this.ctx.fillText(`LEVEL ${snapshot.speedLevel}!`, this.width / 2 - 66, 158);
     }
@@ -1074,6 +1132,29 @@ export class PixelRenderer {
       } else {
         drawRock(this.ctx, placement.x, placement.y);
       }
+    }
+  }
+
+  private drawLevelUpCelebration(levelUpBannerMs: number): void {
+    const clampedMs = Math.max(0, Math.min(PixelRenderer.levelUpAnimationDurationMs, levelUpBannerMs));
+    const progress = 1 - clampedMs / PixelRenderer.levelUpAnimationDurationMs;
+    const centerX = this.width / 2;
+    const centerY = 152;
+    const ringRadius = 12 + progress * 74;
+    const sparkleRadius = 20 + progress * 52;
+    const glowAlpha = Math.max(0.18, 0.7 - progress * 0.46);
+    const sparkleAlpha = Math.max(0.16, 0.64 - progress * 0.34);
+
+    this.ctx.fillStyle = `rgba(134, 239, 172, ${glowAlpha.toFixed(2)})`;
+    this.ctx.fillRect(Math.round(centerX - ringRadius), centerY - 2, Math.round(ringRadius * 2), 4);
+    this.ctx.fillRect(Math.round(centerX - 2), Math.round(centerY - ringRadius), 4, Math.round(ringRadius * 2));
+
+    this.ctx.fillStyle = `rgba(250, 204, 21, ${sparkleAlpha.toFixed(2)})`;
+    for (let index = 0; index < 8; index += 1) {
+      const angle = progress * 2.4 + (Math.PI * 2 * index) / 8;
+      const sparkleX = centerX + Math.cos(angle) * sparkleRadius;
+      const sparkleY = centerY + Math.sin(angle) * sparkleRadius;
+      this.ctx.fillRect(Math.round(sparkleX) - 1, Math.round(sparkleY) - 1, 3, 3);
     }
   }
 

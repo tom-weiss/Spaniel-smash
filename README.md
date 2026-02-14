@@ -3,7 +3,7 @@
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
-Sprite silhouettes were refreshed in `v1.0.11` for faster on-slope readability; gameplay mechanics are unchanged.
+Level progression was rebalanced in `v1.0.12` to ramp hazard density and speed more aggressively after level one.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -21,9 +21,15 @@ Sprite silhouettes were refreshed in `v1.0.11` for faster on-slope readability; 
 
 ## Level & Survival Flow
 
+- Level 1 uses a slower base spawn cadence and biases standard spawns toward `spaniel`, so non-spaniel hazards are less frequent at the start.
+- Obstacle spawn cadence tightens every level (with a lower cap), so total obstacle pressure increases as the run progresses.
+- Baseline downhill speed also scales up each level, before puddle/ice modifiers are applied.
 - Andy boss appears once the level spaniel target is reached (`10-15` range; first level target starts at `12`).
-- If Andy is defeated by jump-smash or exits off-screen, level increases and a level-up banner is shown.
-- After level-up, spawn pacing speeds up briefly (`~300ms` spawn cadence) for a faster transition.
+- If Andy is defeated by jump-smash or leaves the screen, the level always advances; on level-up, lives reset to `3`.
+- Boss exit completion is evaluated on post-move position each frame so edge-of-screen exits cannot miss level transition.
+- Andy throws `poo-bag` projectiles faster on later levels via level-scaled throw cooldowns.
+- Level-up now includes a pulse + sparkle celebration animation behind the banner.
+- After level-up, spawn pacing speeds up briefly for a faster transition.
 - Player invulnerability windows:
   - first `2.6s` at run start and each new level,
   - `2.2s` after each non-lethal crash respawn.
