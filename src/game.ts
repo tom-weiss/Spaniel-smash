@@ -1,7 +1,12 @@
 export type EntityType = "tree" | "rock" | "skier" | "spaniel" | "andy" | "bloodstain";
+type ObstacleTier = "standard" | "rare" | "super-rare" | "mythic";
+type JumpRule = "none" | "low" | "high";
 
 export interface Entity {
   type: EntityType;
+  obstacleId?: string;
+  obstacleTier?: ObstacleTier;
+  jumpRule?: JumpRule;
   x: number;
   y: number;
   width: number;
@@ -24,6 +29,7 @@ export interface SmashEffect {
 export interface InputState {
   left: boolean;
   right: boolean;
+  jump?: boolean;
 }
 
 export interface GameSnapshot {
@@ -57,12 +63,19 @@ export class SpanielSmashGame {
   private effects: SmashEffect[] = [];
   private rng: () => number;
   private spawnClock = 0;
+  private rareSpawnClock = 0;
+  private superRareSpawnClock = 0;
+  private nextRareSpawnMs = 12000;
+  private nextSuperRareSpawnMs = 180000;
   private laneSwitchCooldownMs = 0;
+  private jumpCooldownMs = 0;
+  private jumpTimerMs = 0;
   private crashFreezeMs = 0;
   private sideObstacleOffsetY = 0;
 
   private static readonly staticObstacleSpeed = 2.2;
   private static readonly movingEntityBaseSpeed = 1.2;
+  private static readonly jumpDurationMs = 320;
 
   constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 20) {
     this.width = width;
@@ -71,6 +84,8 @@ export class SpanielSmashGame {
     this.laneWidth = width / laneCount;
     this.rng = rng;
     this.playerLane = this.startingLane();
+    this.nextRareSpawnMs = this.rollRareSpawnMs();
+    this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
   }
 
   public step(deltaMs: number, input: InputState): void {
@@ -108,6 +123,14 @@ export class SpanielSmashGame {
 
   private handleInput(input: InputState, deltaMs: number): void {
     this.laneSwitchCooldownMs = Math.max(0, this.laneSwitchCooldownMs - deltaMs);
+    this.jumpCooldownMs = Math.max(0, this.jumpCooldownMs - deltaMs);
+    this.jumpTimerMs = Math.max(0, this.jumpTimerMs - deltaMs);
+
+    if (input.jump && this.jumpCooldownMs === 0) {
+      this.jumpTimerMs = SpanielSmashGame.jumpDurationMs;
+      this.jumpCooldownMs = 450;
+    }
+
     if (this.laneSwitchCooldownMs > 0) {
       return;
     }
@@ -131,6 +154,9 @@ export class SpanielSmashGame {
     if (this.witchAttackActive && !this.entities.some((entity) => entity.type === "andy")) {
       this.entities.push({
         type: "andy",
+        obstacleId: "mini-boss-bulldog",
+        obstacleTier: "super-rare",
+        jumpRule: "high",
         x: spawnX,
         y: movingSpawnY,
         width: this.laneWidth * 0.56,
@@ -144,67 +170,98 @@ export class SpanielSmashGame {
       return;
     }
 
-    const roll = this.rng();
-    if (roll < 0.18) {
-      this.entities.push({
-        type: "tree",
-        x: spawnX,
-        y: -24,
-        width: this.laneWidth * 0.5,
-        height: 30,
-        speed: SpanielSmashGame.staticObstacleSpeed,
-        lane: spawnLane,
-        laneSwitchCooldownMs: 0,
-        direction: 1,
-        crashAnimationMs: 0
-      });
+    this.rareSpawnClock += 450;
+    this.superRareSpawnClock += 450;
+
+    if (this.superRareSpawnClock >= this.nextSuperRareSpawnMs) {
+      this.superRareSpawnClock = 0;
+      this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
+      this.spawnTieredObstacle("super-rare", spawnLane, spawnX, movingDirection, movingSpawnY);
       return;
     }
 
-    if (roll < 0.36) {
-      this.entities.push({
-        type: "rock",
-        x: spawnX,
-        y: -20,
-        width: this.laneWidth * 0.4,
-        height: 20,
-        speed: SpanielSmashGame.staticObstacleSpeed,
-        lane: spawnLane,
-        laneSwitchCooldownMs: 0,
-        direction: 1,
-        crashAnimationMs: 0
-      });
+    if (this.rareSpawnClock >= this.nextRareSpawnMs) {
+      this.rareSpawnClock = 0;
+      this.nextRareSpawnMs = this.rollRareSpawnMs();
+      this.spawnTieredObstacle("rare", spawnLane, spawnX, movingDirection, movingSpawnY);
       return;
     }
 
-    if (roll < 0.56) {
-      this.entities.push({
-        type: "skier",
-        x: spawnX,
-        y: movingSpawnY,
-        width: this.laneWidth * 0.56,
-        height: 30,
-        speed: SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5,
-        lane: spawnLane,
-        laneSwitchCooldownMs: 0,
-        direction: movingDirection,
-        crashAnimationMs: 0
-      });
-      return;
-    }
+    this.spawnTieredObstacle("standard", spawnLane, spawnX, movingDirection, movingSpawnY);
+  }
 
-    this.entities.push({
-      type: "spaniel",
+  private spawnTieredObstacle(tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): void {
+    const makeEntity = (
+      type: EntityType,
+      obstacleId: string,
+      jumpRule: JumpRule,
+      width: number,
+      height: number,
+      speed: number,
+      isMoving: boolean
+    ): Entity => ({
+      type,
+      obstacleId,
+      obstacleTier: tier,
+      jumpRule,
       x: spawnX,
-      y: movingSpawnY,
-      width: this.laneWidth * 0.5,
-      height: 22,
-      speed: SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5,
+      y: isMoving ? movingSpawnY : -24,
+      width,
+      height,
+      speed,
       lane: spawnLane,
       laneSwitchCooldownMs: 0,
-      direction: movingDirection,
+      direction: isMoving ? movingDirection : 1,
       crashAnimationMs: 0
     });
+
+    const roll = this.rng();
+    if (tier === "standard") {
+      if (roll < 0.18) {
+        this.entities.push(makeEntity("tree", "cracked-sidewalk-slab", "low", this.laneWidth * 0.5, 30, SpanielSmashGame.staticObstacleSpeed, false));
+        return;
+      }
+      if (roll < 0.36) {
+        this.entities.push(makeEntity("rock", "trash-bag-cluster", "low", this.laneWidth * 0.4, 20, SpanielSmashGame.staticObstacleSpeed, false));
+        return;
+      }
+      if (roll < 0.56) {
+        this.entities.push(makeEntity("skier", "rolling-skateboard", "none", this.laneWidth * 0.56, 30, SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5, true));
+        return;
+      }
+      this.entities.push(makeEntity("spaniel", "squirrel-zigzag", "none", this.laneWidth * 0.5, 22, SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5, true));
+      return;
+    }
+
+    if (tier === "rare") {
+      if (roll < 0.5) {
+        this.entities.push(makeEntity("tree", "fence-segment", "high", this.laneWidth * 0.6, 36, SpanielSmashGame.staticObstacleSpeed + 0.1, false));
+        return;
+      }
+      this.entities.push(makeEntity("skier", "scooter-rider", "none", this.laneWidth * 0.58, 32, SpanielSmashGame.movingEntityBaseSpeed + 0.8, true));
+      return;
+    }
+
+    if (roll < 0.5) {
+      this.entities.push(makeEntity("rock", "roadwork-trench", "high", this.laneWidth * 0.75, 40, SpanielSmashGame.staticObstacleSpeed + 0.25, false));
+      return;
+    }
+    this.entities.push(makeEntity("andy", "garbage-truck-reverse", "high", this.laneWidth * 0.7, 34, SpanielSmashGame.movingEntityBaseSpeed + 0.3, true));
+  }
+
+  private rollRareSpawnMs(): number {
+    return 10000 + Math.floor(this.rng() * 10001);
+  }
+
+  private rollSuperRareSpawnMs(): number {
+    return 60000 + Math.floor(this.rng() * 540001);
+  }
+
+  private canClearByJump(entity: Entity): boolean {
+    if (this.jumpTimerMs <= 0) {
+      return false;
+    }
+    return entity.jumpRule === "low" || entity.jumpRule === "high";
   }
 
   private resolveCollisions(): void {
@@ -239,6 +296,11 @@ export class SpanielSmashGame {
           this.witchAttackActive = true;
           this.speedLevel += 1;
         }
+        continue;
+      }
+
+      if (this.canClearByJump(entity)) {
+        survivors.push(entity);
         continue;
       }
 
@@ -372,7 +434,13 @@ export class SpanielSmashGame {
     this.entities = [];
     this.effects = [];
     this.spawnClock = 0;
+    this.rareSpawnClock = 0;
+    this.superRareSpawnClock = 0;
+    this.nextRareSpawnMs = this.rollRareSpawnMs();
+    this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
     this.laneSwitchCooldownMs = 0;
+    this.jumpCooldownMs = 0;
+    this.jumpTimerMs = 0;
     this.crashFreezeMs = 0;
     this.sideObstacleOffsetY = 0;
   }
