@@ -18,6 +18,10 @@
         color: #e2e8f0;
         font-family: "Press Start 2P", monospace;
         overflow: hidden;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: none;
       }
       .shell {
         position: relative;
@@ -48,6 +52,7 @@
         display: block;
         border: 2px solid #e2e8f0;
         background: #f8fafc;
+        touch-action: none;
       }
       p {
         font-family: monospace;
@@ -115,6 +120,7 @@
         gap: 10px;
         margin-top: 10px;
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
       }
       .control {
         flex: 1;
@@ -131,6 +137,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        font-family: inherit;
+        font-size: 12px;
       }
       .control svg {
         width: 24px;
@@ -168,10 +176,10 @@
         <button id="control-left" class="control" aria-label="Move left">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M15.4 4.6a1 1 0 0 1 0 1.4L10.41 11H20a1 1 0 1 1 0 2h-9.59l4.99 4.99a1 1 0 0 1-1.41 1.41l-6.7-6.69a1 1 0 0 1 0-1.42l6.7-6.69a1 1 0 0 1 1.41 0Z"/></svg>
         </button>
+        <button id="control-jump" class="control" aria-label="Jump">JUMP</button>
         <button id="control-right" class="control" aria-label="Move right">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8.6 19.4a1 1 0 0 1 0-1.4L13.59 13H4a1 1 0 1 1 0-2h9.59L8.6 6.01A1 1 0 1 1 10.01 4.6l6.7 6.69a1 1 0 0 1 0 1.42l-6.7 6.69a1 1 0 0 1-1.41 0Z"/></svg>
         </button>
-        <button id="control-jump" class="control" aria-label="Jump">JUMP</button>
       </div>
     </div>
     <script type="module" src="./dist/main.js"></script>
