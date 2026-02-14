@@ -33,6 +33,7 @@ Core rendering (player/skier/tree sprite detail, including rear-view ski helmets
 - Player invulnerability windows:
   - `2.6s` on level-up transitions (levels after level 1),
   - `2.2s` after each non-lethal crash respawn.
+- Crash freeze now consumes none of the respawn invulnerability timer, and the force field appears once player movement resumes.
 - While invulnerable, the player is surrounded by a flashing green force field.
 
 ## Controls

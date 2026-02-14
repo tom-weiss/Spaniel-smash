@@ -173,7 +173,7 @@ class SkiMusic {
         osc.stop(at + duration + 0.03);
     }
 }
-const GAME_VERSION = "v1.1.1";
+const GAME_VERSION = "v1.1.2";
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();

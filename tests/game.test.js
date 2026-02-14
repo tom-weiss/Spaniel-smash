@@ -257,6 +257,32 @@ test('level one does not start with invulnerability but level-up still grants it
   assert.equal(game.snapshot().isPlayerImmortal, false);
 });
 
+test('respawn invulnerability starts when crash freeze ends and movement resumes', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.playerImmortalMs = 0;
+  game.forceSpawn({ type: 'tree', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
+
+  game.step(16, { left: false, right: false });
+  const afterCrash = game.snapshot();
+  assert.equal(afterCrash.isCrashActive, true);
+  assert.equal(afterCrash.isPlayerImmortal, true);
+  const respawnImmortalMs = afterCrash.playerImmortalMs;
+  const frozenX = afterCrash.playerX;
+
+  game.step(640, { left: true, right: false });
+  const stillFrozen = game.snapshot();
+  assert.equal(stillFrozen.isCrashActive, true);
+  assert.equal(stillFrozen.playerImmortalMs, respawnImmortalMs);
+  assert.equal(stillFrozen.playerX, frozenX);
+
+  game.step(16, { left: true, right: false });
+  const resumed = game.snapshot();
+  assert.equal(resumed.isCrashActive, false);
+  assert.equal(resumed.isPlayerImmortal, true);
+  assert.equal(resumed.playerImmortalMs, respawnImmortalMs);
+  assert.notEqual(resumed.playerX, frozenX);
+});
+
 test('snapshot returns copied entities and effects', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.forceSpawn({ type: 'spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });

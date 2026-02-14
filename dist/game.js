@@ -134,7 +134,9 @@ export class SpanielSmashGame {
         this.tickRuntimeTimers(deltaMs);
         if (this.crashFreezeMs > 0) {
             this.crashFreezeMs = Math.max(0, this.crashFreezeMs - deltaMs);
-            return;
+            if (this.crashFreezeMs > 0) {
+                return;
+            }
         }
         this.handleInput(input, deltaMs);
         this.spawnClock += deltaMs;
