@@ -218,7 +218,7 @@ export class SpanielSmashGame {
     const roll = this.rng();
     if (tier === "standard") {
       if (roll < 0.18) {
-        this.entities.push(makeEntity("tree", "cracked-sidewalk-slab", "low", this.laneWidth * 0.5, 30, SpanielSmashGame.staticObstacleSpeed, false));
+        this.entities.push(makeEntity("tree", "cracked-sidewalk-slab", "none", this.laneWidth * 0.5, 30, SpanielSmashGame.staticObstacleSpeed, false));
         return;
       }
       if (roll < 0.36) {
@@ -235,7 +235,7 @@ export class SpanielSmashGame {
 
     if (tier === "rare") {
       if (roll < 0.5) {
-        this.entities.push(makeEntity("tree", "fence-segment", "high", this.laneWidth * 0.6, 36, SpanielSmashGame.staticObstacleSpeed + 0.1, false));
+        this.entities.push(makeEntity("tree", "fence-segment", "none", this.laneWidth * 0.6, 36, SpanielSmashGame.staticObstacleSpeed + 0.1, false));
         return;
       }
       this.entities.push(makeEntity("skier", "scooter-rider", "none", this.laneWidth * 0.58, 32, SpanielSmashGame.movingEntityBaseSpeed + 0.8, true));
@@ -587,7 +587,7 @@ export class PixelRenderer {
   }
 
   public render(snapshot: GameSnapshot): void {
-    this.ctx.fillStyle = "#9de0ff";
+    this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(0, 0, this.width, this.height);
 
     this.ctx.fillStyle = "#f3fbff";
@@ -616,7 +616,7 @@ export class PixelRenderer {
       } else if (entity.type === "bloodstain") {
         drawBloodstain(this.ctx, entity.x, entity.y);
       } else {
-        drawSkier(this.ctx, entity.x, entity.y, "#7b1fa2", "#ff7da0");
+        drawWitch(this.ctx, entity.x, entity.y);
       }
     }
 
@@ -702,6 +702,25 @@ function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColo
   ctx.fillStyle = "#264653";
   ctx.fillRect(x, y + 22, 24, 2);
   ctx.fillRect(x, y + 25, 24, 2);
+}
+
+function drawWitch(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#1f2937";
+  ctx.fillRect(x + 4, y + 4, 14, 2);
+  ctx.fillStyle = "#4c1d95";
+  ctx.fillRect(x + 7, y, 8, 5);
+  ctx.fillRect(x + 6, y + 6, 10, 10);
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(x + 9, y + 5, 4, 1);
+  ctx.fillStyle = "#86efac";
+  ctx.fillRect(x + 8, y + 8, 6, 5);
+  ctx.fillStyle = "#111827";
+  ctx.fillRect(x + 9, y + 9, 1, 1);
+  ctx.fillRect(x + 12, y + 9, 1, 1);
+  ctx.fillStyle = "#7c2d12";
+  ctx.fillRect(x + 2, y + 17, 20, 2);
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillRect(x + 17, y + 16, 3, 3);
 }
 
 function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void {
