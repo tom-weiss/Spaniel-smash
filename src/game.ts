@@ -1102,7 +1102,7 @@ export class PixelRenderer {
         if ((entity.crashAnimationMs ?? 0) > 0) drawCrashPulse(this.ctx, entity.x, entity.y, entity.crashAnimationMs ?? 0, "#ffa500");
         drawRock(this.ctx, entity.x, entity.y);
       } else if (entity.type === "skier") drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#ff6b6b");
-      else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y);
+      else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y, snapshot.sideObstacleOffsetY + entity.x);
       else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
       else drawAndy(this.ctx, entity.x, entity.y);
     }
@@ -1113,9 +1113,9 @@ export class PixelRenderer {
     }
 
     if (snapshot.isCrashActive) {
-      drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
+      drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#dc2626", "#ffd166");
     } else {
-      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
+      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#dc2626", "#ffd166", snapshot.playerJumpOffset);
     }
 
     for (const effect of snapshot.effects) drawSmashEffect(this.ctx, effect);
@@ -1225,25 +1225,36 @@ export class PixelRenderer {
 }
 
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#1f5138";
-  ctx.fillRect(x + 2, y + 1, 16, 6);
-  ctx.fillRect(x + 1, y + 6, 18, 6);
-  ctx.fillRect(x + 2, y + 12, 16, 2);
-  ctx.fillStyle = "#2d6a4f";
-  ctx.fillRect(x + 3, y, 14, 18);
-  ctx.fillRect(x, y + 8, 20, 12);
-  ctx.fillStyle = "#40916c";
-  ctx.fillRect(x + 5, y + 3, 4, 3);
-  ctx.fillRect(x + 10, y + 4, 4, 2);
-  ctx.fillRect(x + 4, y + 10, 3, 2);
-  ctx.fillRect(x + 12, y + 11, 3, 2);
-  ctx.fillStyle = "#1b4332";
-  ctx.fillRect(x + 16, y + 9, 2, 10);
-  ctx.fillRect(x + 14, y + 14, 2, 4);
+  // Conifer silhouette: pointed crown with layered branch tiers.
+  ctx.fillStyle = "#14532d";
+  ctx.fillRect(x + 10, y, 1, 1);
+  ctx.fillRect(x + 9, y + 1, 3, 1);
+  ctx.fillRect(x + 8, y + 2, 5, 1);
+  ctx.fillRect(x + 7, y + 3, 7, 2);
+  ctx.fillRect(x + 6, y + 5, 9, 2);
+  ctx.fillStyle = "#166534";
+  ctx.fillRect(x + 5, y + 7, 11, 3);
+  ctx.fillRect(x + 4, y + 10, 13, 3);
+  ctx.fillStyle = "#15803d";
+  ctx.fillRect(x + 3, y + 13, 15, 3);
+  ctx.fillRect(x + 2, y + 16, 17, 3);
+  ctx.fillRect(x + 3, y + 19, 15, 3);
+  ctx.fillRect(x + 4, y + 22, 13, 2);
+  ctx.fillStyle = "#22c55e";
+  ctx.fillRect(x + 8, y + 3, 2, 1);
+  ctx.fillRect(x + 6, y + 8, 3, 1);
+  ctx.fillRect(x + 12, y + 9, 2, 1);
+  ctx.fillRect(x + 5, y + 14, 2, 1);
+  ctx.fillRect(x + 13, y + 15, 2, 1);
+  ctx.fillRect(x + 6, y + 20, 2, 1);
+  ctx.fillRect(x + 12, y + 21, 2, 1);
+  ctx.fillStyle = "#0f3d2e";
+  ctx.fillRect(x + 2, y + 20, 2, 2);
+  ctx.fillRect(x + 16, y + 20, 2, 2);
   ctx.fillStyle = "#7f5539";
-  ctx.fillRect(x + 8, y + 20, 4, 10);
+  ctx.fillRect(x + 8, y + 24, 4, 6);
   ctx.fillStyle = "#5e3b2a";
-  ctx.fillRect(x + 10, y + 20, 2, 10);
+  ctx.fillRect(x + 9, y + 24, 2, 6);
 }
 function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   ctx.fillStyle = "#6b7280";
@@ -1267,17 +1278,21 @@ function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): vo
   ctx.fillRect(x + 9, y + 14, 5, 2);
   ctx.fillRect(x + 13, y + 8, 2, 2);
 }
-function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number, animationSeed = 0): void {
+  const wagFrame = Math.floor(animationSeed / 5) % 4;
+  const tailOffsetX = wagFrame < 2 ? -1 : 0;
+  const tailOffsetY = wagFrame === 1 || wagFrame === 2 ? -1 : 0;
   ctx.fillStyle = "#8b5e3c";
   ctx.fillRect(x + 3, y + 9, 12, 7);
   ctx.fillRect(x + 14, y + 10, 4, 5);
   ctx.fillRect(x + 15, y + 7, 5, 5);
   ctx.fillRect(x + 19, y + 9, 3, 2);
-  ctx.fillRect(x + 1, y + 8, 3, 2);
+  ctx.fillRect(x + 1 + tailOffsetX, y + 8 + tailOffsetY, 3, 2);
   ctx.fillStyle = "#c58f63";
   ctx.fillRect(x + 5, y + 10, 7, 2);
   ctx.fillRect(x + 16, y + 9, 3, 2);
   ctx.fillRect(x + 20, y + 10, 2, 1);
+  ctx.fillRect(x + 2 + tailOffsetX, y + 8 + tailOffsetY, 1, 1);
   ctx.fillStyle = "#6b3f2a";
   ctx.fillRect(x + 15, y + 8, 1, 5);
   ctx.fillRect(x + 18, y + 8, 1, 5);
@@ -1350,51 +1365,86 @@ function drawPooBag(ctx: CanvasRenderingContext2D, x: number, y: number): void {
 }
 function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string, jumpOffset = 0): void {
   const inAir = jumpOffset > 0;
-  const bodyHeight = inAir ? 12 : 14;
-  const bodyY = inAir ? y + 11 : y + 10;
-  const helmetY = inAir ? y + 2 : y + 3;
-  const skiInset = inAir ? 2 : 0;
-  const skiWidth = inAir ? 20 : 24;
-  const poleY = inAir ? y + 8 : y + 9;
+  const bodyHeight = inAir ? 10 : 12;
+  const bodyY = inAir ? y + 12 : y + 11;
+  const helmetY = inAir ? y + 4 : y + 5;
+  const poleStartY = bodyY + 2;
+  const poleLength = inAir ? 11 : 13;
+  const skiStartY = inAir ? y + 24 : y + 26;
+  const skiSpread = inAir ? [0, 1, 1, 2, 2, 3] : [0, 1, 1, 2, 2, 3, 3];
+  const legTopY = bodyY + bodyHeight - 1;
+  const legHeight = inAir ? 5 : 6;
 
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x + 4, bodyY, 14, bodyHeight);
-  ctx.fillRect(x + 6, helmetY - 1, 10, 9);
-  ctx.fillStyle = bodyColor;
   ctx.fillRect(x + 5, bodyY, 12, bodyHeight);
-  ctx.fillRect(x + 4, bodyY + 4, 2, 5);
-  ctx.fillRect(x + 16, bodyY + 4, 2, 5);
-  ctx.fillStyle = "rgba(15, 23, 42, 0.22)";
-  ctx.fillRect(x + 11, bodyY + 1, 5, Math.max(2, bodyHeight - 2));
-  ctx.fillRect(x + 6, bodyY + bodyHeight - 3, 6, 1);
+  ctx.fillStyle = bodyColor;
+  ctx.fillRect(x + 6, bodyY + 1, 10, bodyHeight - 1);
+  ctx.fillRect(x + 5, bodyY + 2, 1, 3);
+  ctx.fillRect(x + 16, bodyY + 2, 1, 3);
+  ctx.fillStyle = "rgba(15, 23, 42, 0.3)";
+  ctx.fillRect(x + 11, bodyY + 2, 2, Math.max(2, bodyHeight - 4));
+  ctx.fillRect(x + 8, bodyY + bodyHeight - 3, 6, 1);
   ctx.fillStyle = helmetColor;
-  ctx.fillRect(x + 7, helmetY, 8, 7);
+  ctx.fillRect(x + 8, helmetY, 6, 6);
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x + 11, helmetY + 2, 1, 4);
-  ctx.fillRect(x + 8, helmetY + 6, 6, 1);
+  ctx.fillRect(x + 9, helmetY + 2, 4, 3);
+  ctx.fillRect(x + 8, helmetY + 5, 6, 1);
   ctx.fillStyle = "#e2e8f0";
-  ctx.fillRect(x + 9, helmetY + 1, 4, 1);
+  ctx.fillRect(x + 9, helmetY + 1, 3, 1);
   ctx.fillStyle = "#475569";
-  ctx.fillRect(x + 7, helmetY + 3, 1, 3);
-  ctx.fillRect(x + 14, helmetY + 3, 1, 3);
+  ctx.fillRect(x + 8, helmetY + 3, 1, 2);
+  ctx.fillRect(x + 13, helmetY + 3, 1, 2);
   ctx.fillStyle = "#1e293b";
-  ctx.fillRect(x + 8, helmetY + 7, 6, 1);
-  ctx.fillRect(x + 10, helmetY + 8, 2, 1);
-  ctx.fillStyle = "#475569";
-  ctx.fillRect(x + 3, poleY + 1, 1, 11);
-  ctx.fillRect(x + 2, poleY + 11, 3, 1);
-  ctx.fillStyle = "#475569";
-  ctx.fillRect(x + 17, poleY, 1, 12);
-  ctx.fillRect(x + 16, poleY + 11, 3, 1);
-  ctx.fillStyle = "#264653";
-  ctx.fillRect(x + skiInset, y + 22, skiWidth, 2);
-  ctx.fillRect(x + skiInset, y + 25, skiWidth, 2);
+  ctx.fillRect(x + 8, helmetY + 6, 6, 1);
+  ctx.fillRect(x + 10, helmetY + 7, 2, 1);
+
+  ctx.fillStyle = "#1f2937";
+  ctx.fillRect(x + 8, legTopY, 2, legHeight);
+  ctx.fillRect(x + 12, legTopY, 2, legHeight);
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(x + 7, legTopY + legHeight - 1, 3, 2);
+  ctx.fillRect(x + 12, legTopY + legHeight - 1, 3, 2);
+
+  for (let index = 0; index < poleLength; index += 1) {
+    const diagonalOffset = Math.floor((index + 1) / 3);
+    const rowY = poleStartY + index;
+    const leftX = x + 6 - diagonalOffset;
+    const rightX = x + 16 + diagonalOffset;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(leftX, rowY, 1, 1);
+    ctx.fillRect(rightX, rowY, 1, 1);
+  }
   ctx.fillStyle = "#0f172a";
-  ctx.fillRect(x + skiInset + 1, y + 23, skiWidth - 2, 1);
-  ctx.fillRect(x + skiInset + 1, y + 26, skiWidth - 2, 1);
-  ctx.fillStyle = "#93c5fd";
-  ctx.fillRect(x + skiInset, y + 22, 2, 1);
-  ctx.fillRect(x + skiInset + skiWidth - 2, y + 25, 2, 1);
+  ctx.fillRect(x + 5, poleStartY, 2, 1);
+  ctx.fillRect(x + 15, poleStartY, 2, 1);
+  const poleTipY = poleStartY + poleLength - 1;
+  const poleTipOffset = Math.floor((poleLength + 1) / 3);
+  const leftPoleTipX = x + 6 - poleTipOffset;
+  const rightPoleTipX = x + 16 + poleTipOffset;
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(leftPoleTipX, poleTipY, 2, 1);
+  ctx.fillRect(rightPoleTipX, poleTipY, 2, 1);
+
+  for (let index = 0; index < skiSpread.length; index += 1) {
+    const spread = skiSpread[index] ?? 0;
+    const rowY = skiStartY + index;
+    const leftSkiX = x + 7 - spread;
+    const rightSkiX = x + 12 + spread;
+    ctx.fillStyle = "#334155";
+    ctx.fillRect(leftSkiX, rowY, 4, 1);
+    ctx.fillRect(rightSkiX, rowY, 4, 1);
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(leftSkiX + 3, rowY, 1, 1);
+    ctx.fillRect(rightSkiX + 3, rowY, 1, 1);
+    ctx.fillStyle = "#93c5fd";
+    ctx.fillRect(leftSkiX, rowY, 1, 1);
+    ctx.fillRect(rightSkiX, rowY, 1, 1);
+  }
+  const tipSpread = skiSpread[skiSpread.length - 1] ?? 0;
+  const skiTipY = skiStartY + skiSpread.length - 1;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.fillRect(x + 6 - tipSpread, skiTipY, 1, 1);
+  ctx.fillRect(x + 16 + tipSpread, skiTipY, 1, 1);
 }
 function drawDowndraftZone(ctx: CanvasRenderingContext2D, x: number, y: number, pushDirection: 1 | -1): void {
   ctx.fillStyle = "#1e293b";
@@ -1528,11 +1578,16 @@ function drawSmashEffect(ctx: CanvasRenderingContext2D, effect: SmashEffect): vo
 
   const progress = 1 - effect.ttlMs / effect.maxTtlMs;
   const radius = Math.floor(progress * 10) + 2;
-  const color = effect.kind === "spaniel-smash" ? "#dc2626" : effect.kind === "poo-splat" ? "#22c55e" : "#f97316";
+  const color = effect.kind === "spaniel-smash" ? "#dc2626" : effect.kind === "poo-splat" ? "#8b5a2b" : "#f97316";
   ctx.fillStyle = color;
   ctx.fillRect(effect.x + 8 - radius, effect.y + 8 - radius, radius, radius);
   ctx.fillRect(effect.x + 8 + radius / 2, effect.y + 5, radius, radius);
   ctx.fillRect(effect.x + 4, effect.y + 12 + radius / 2, radius, radius);
+  if (effect.kind === "poo-splat") {
+    ctx.fillStyle = "#5b3715";
+    const centerSize = Math.max(2, Math.floor(radius * 0.6));
+    ctx.fillRect(effect.x + 8 - Math.floor(centerSize / 2), effect.y + 8 - Math.floor(centerSize / 2), centerSize, centerSize);
+  }
 }
 
 function drawCrashPulse(ctx: CanvasRenderingContext2D, x: number, y: number, crashAnimationMs: number, color: string): void {

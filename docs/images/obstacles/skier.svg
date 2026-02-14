@@ -1,10 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" role="img" aria-label="skier obstacle">
   <rect width="56" height="56" fill="#f8fafc"/>
-  <rect x="22" y="24" width="12" height="16" fill="#3a86ff"/>
-  <rect x="18" y="30" width="3" height="6" fill="#3a86ff"/>
-  <rect x="24" y="15" width="8" height="9" fill="#ff6b6b"/>
-  <rect x="37" y="22" width="2" height="14" fill="#475569"/>
-  <rect x="35" y="35" width="5" height="2" fill="#475569"/>
-  <rect x="12" y="41" width="30" height="2" fill="#264653"/>
-  <rect x="12" y="45" width="30" height="2" fill="#264653"/>
+  <rect x="22" y="23" width="12" height="12" fill="#0f172a"/>
+  <rect x="23" y="24" width="10" height="11" fill="#3a86ff"/>
+  <rect x="22" y="25" width="1" height="3" fill="#3a86ff"/>
+  <rect x="33" y="25" width="1" height="3" fill="#3a86ff"/>
+  <rect x="28" y="26" width="2" height="7" fill="rgba(15,23,42,0.3)"/>
+  <rect x="24" y="32" width="6" height="1" fill="rgba(15,23,42,0.3)"/>
+  <rect x="24" y="17" width="8" height="8" fill="#0f172a"/>
+  <rect x="25" y="18" width="6" height="6" fill="#ff6b6b"/>
+  <rect x="26" y="19" width="4" height="1" fill="#e2e8f0"/>
+  <rect x="26" y="21" width="4" height="3" fill="#0f172a"/>
+  <rect x="25" y="23" width="6" height="1" fill="#0f172a"/>
+  <rect x="23" y="21" width="1" height="2" fill="#475569"/>
+  <rect x="31" y="21" width="1" height="2" fill="#475569"/>
+  <rect x="25" y="35" width="2" height="6" fill="#1f2937"/>
+  <rect x="29" y="35" width="2" height="6" fill="#1f2937"/>
+  <rect x="24" y="40" width="3" height="2" fill="#0b1220"/>
+  <rect x="29" y="40" width="3" height="2" fill="#0b1220"/>
+  <rect x="23" y="25" width="1" height="10" fill="#000000"/>
+  <rect x="33" y="25" width="1" height="10" fill="#000000"/>
+  <rect x="20" y="34" width="2" height="1" fill="#f59e0b"/>
+  <rect x="36" y="34" width="2" height="1" fill="#f59e0b"/>
+  <rect x="24" y="42" width="4" height="1" fill="#334155"/>
+  <rect x="28" y="42" width="4" height="1" fill="#334155"/>
+  <rect x="23" y="43" width="4" height="1" fill="#334155"/>
+  <rect x="29" y="43" width="4" height="1" fill="#334155"/>
+  <rect x="22" y="44" width="4" height="1" fill="#334155"/>
+  <rect x="30" y="44" width="4" height="1" fill="#334155"/>
+  <rect x="21" y="45" width="4" height="1" fill="#334155"/>
+  <rect x="31" y="45" width="4" height="1" fill="#334155"/>
+  <rect x="20" y="46" width="4" height="1" fill="#334155"/>
+  <rect x="32" y="46" width="4" height="1" fill="#334155"/>
+  <rect x="19" y="47" width="4" height="1" fill="#334155"/>
+  <rect x="33" y="47" width="4" height="1" fill="#334155"/>
+  <rect x="18" y="48" width="4" height="1" fill="#334155"/>
+  <rect x="34" y="48" width="4" height="1" fill="#334155"/>
 </svg>

@@ -17,6 +17,7 @@ class SkiMusic {
   private scheduler: number | null = null;
   private lcgState = 1;
   private muted = false;
+  private bossMode = false;
 
   public setMuted(muted: boolean): void {
     this.muted = muted;
@@ -28,6 +29,16 @@ class SkiMusic {
     if (this.audioCtx?.state === "suspended") {
       void this.audioCtx.resume();
     }
+    this.applyMixLevel();
+  }
+
+  public setBossMode(active: boolean): void {
+    if (this.bossMode === active) {
+      return;
+    }
+    this.bossMode = active;
+    this.applyMixLevel();
+    this.resetSequence();
   }
 
   public start(): void {
@@ -41,8 +52,8 @@ class SkiMusic {
     if (!this.audioCtx) {
       this.audioCtx = new window.AudioContext();
       this.master = this.audioCtx.createGain();
-      this.master.gain.value = 0.03;
       this.master.connect(this.audioCtx.destination);
+      this.applyMixLevel();
       this.resetSequence();
     }
 
@@ -76,7 +87,7 @@ class SkiMusic {
   }
 
   public resetSequence(): void {
-    this.lcgState = 1;
+    this.lcgState = this.bossMode ? 17 : 1;
     if (this.audioCtx) {
       this.nextNoteTime = this.audioCtx.currentTime + 0.02;
     }
@@ -148,22 +159,36 @@ class SkiMusic {
       return;
     }
 
-    const lookAhead = this.audioCtx.currentTime + 0.3;
+    const lookAhead = this.audioCtx.currentTime + (this.bossMode ? 0.24 : 0.3);
+    const step = this.bossMode ? 0.092 : 0.14;
+    const duration = this.bossMode ? 0.105 : 0.13;
+    const wave: OscillatorType = this.bossMode ? "sawtooth" : "square";
+    const peak = this.bossMode ? 0.28 : 0.22;
     while (this.nextNoteTime < lookAhead) {
-      const note = this.generateNote();
-      this.playNote(note, this.nextNoteTime, 0.13, "square", 0.22);
-      this.nextNoteTime += 0.14;
+      const note = this.generateNote(this.bossMode);
+      this.playNote(note, this.nextNoteTime, duration, wave, peak);
+      if (this.bossMode && (this.lcgState % 3 === 0)) {
+        this.playNote(Math.max(90, note * 0.5), this.nextNoteTime + 0.028, 0.08, "triangle", 0.2);
+      }
+      this.nextNoteTime += step;
     }
   }
 
-  private generateNote(): number {
+  private generateNote(bossMode = false): number {
     this.lcgState = (this.lcgState * 48271) % 2147483647;
     const r = this.lcgState / 2147483647;
-    const scale = [0, 3, 5, 7, 10, 12, 15, 17];
-    const root = 220;
-    const octave = r > 0.72 ? 2 : r > 0.45 ? 1 : 0;
+    const scale = bossMode ? [0, 1, 3, 5, 6, 8, 10, 12] : [0, 3, 5, 7, 10, 12, 15, 17];
+    const root = bossMode ? 174 : 220;
+    const octave = bossMode ? (r > 0.62 ? 2 : r > 0.26 ? 1 : 0) : (r > 0.72 ? 2 : r > 0.45 ? 1 : 0);
     const degree = scale[Math.floor(r * scale.length)];
     return root * 2 ** ((degree + octave * 12) / 12);
+  }
+
+  private applyMixLevel(): void {
+    if (!this.master) {
+      return;
+    }
+    this.master.gain.value = this.bossMode ? 0.05 : 0.03;
   }
 
   private playNote(freq: number, at: number, duration: number, wave: OscillatorType, peak: number): void {
@@ -206,7 +231,7 @@ class SkiMusic {
   }
 }
 
-const GAME_VERSION = "v1.1.2";
+const GAME_VERSION = "v1.1.16";
 
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
@@ -395,6 +420,7 @@ function frame(now: number): void {
   }
 
   const snapshot = game.snapshot();
+  music.setBossMode(snapshot.isBossActive && !snapshot.isGameOver);
   renderer.render(snapshot);
 
   if (statusScore) {

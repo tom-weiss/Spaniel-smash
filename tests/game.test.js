@@ -420,6 +420,119 @@ test('pixel renderer draws force field around player while immortal', () => {
   assert.equal(offCase.calls.some((entry) => entry[0] === 98 && entry[1] === 296 && entry[2] === 28 && entry[3] === 1), false);
 });
 
+test('pixel renderer draws angled downhill skis and visible poles for skier sprite', () => {
+  const calls = [];
+  let activeFillStyle = '#000';
+  const ctx = {
+    font: '16px monospace',
+    get fillStyle() {
+      return activeFillStyle;
+    },
+    set fillStyle(value) {
+      activeFillStyle = value;
+    },
+    fillRect: (...args) => calls.push({ args, fillStyle: activeFillStyle }),
+    fillText: () => {}
+  };
+
+  const renderer = new PixelRenderer(ctx, 300, 600);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 0,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [],
+    effects: []
+  });
+
+  assert.ok(calls.some((entry) => entry.fillStyle === '#334155' && entry.args[0] === 107 && entry.args[1] === 326 && entry.args[2] === 4 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#334155' && entry.args[0] === 104 && entry.args[1] === 332 && entry.args[2] === 4 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#334155' && entry.args[0] === 112 && entry.args[1] === 326 && entry.args[2] === 4 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#334155' && entry.args[0] === 115 && entry.args[1] === 332 && entry.args[2] === 4 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#000000' && entry.args[0] === 106 && entry.args[1] === 313 && entry.args[2] === 1 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#000000' && entry.args[0] === 102 && entry.args[1] === 325 && entry.args[2] === 1 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#000000' && entry.args[0] === 116 && entry.args[1] === 313 && entry.args[2] === 1 && entry.args[3] === 1));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#000000' && entry.args[0] === 120 && entry.args[1] === 325 && entry.args[2] === 1 && entry.args[3] === 1));
+});
+
+test('spaniel sprite tail wags across animation phases', () => {
+  const makeCalls = (sideObstacleOffsetY) => {
+    const calls = [];
+    const ctx = {
+      fillStyle: '#000',
+      font: '16px monospace',
+      fillRect: (...args) => calls.push(args),
+      fillText: () => {}
+    };
+    const renderer = new PixelRenderer(ctx, 300, 600);
+    renderer.render({
+      lives: 3,
+      score: 0,
+      speedLevel: 1,
+      spanielsSmashed: 0,
+      isGameOver: false,
+      playerX: 40,
+      playerY: 300,
+      playerJumpOffset: 0,
+      isCrashActive: false,
+      sideObstacleOffsetY,
+      entities: [
+        { type: 'spaniel', x: 100, y: 200, width: 20, height: 20, speed: 0 }
+      ],
+      effects: []
+    });
+    return calls;
+  };
+
+  const wagLeftCalls = makeCalls(0);
+  const wagRightCalls = makeCalls(10);
+  assert.ok(wagLeftCalls.some((entry) => entry[0] === 100 && entry[1] === 208 && entry[2] === 3 && entry[3] === 2));
+  assert.ok(wagRightCalls.some((entry) => entry[0] === 101 && entry[1] === 207 && entry[2] === 3 && entry[3] === 2));
+});
+
+test('poo splat effect renders brown explosion tones', () => {
+  const calls = [];
+  let activeFillStyle = '#000';
+  const ctx = {
+    font: '16px monospace',
+    get fillStyle() {
+      return activeFillStyle;
+    },
+    set fillStyle(value) {
+      activeFillStyle = value;
+    },
+    fillRect: (...args) => calls.push({ args, fillStyle: activeFillStyle }),
+    fillText: () => {}
+  };
+
+  const renderer = new PixelRenderer(ctx, 300, 600);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 0,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [],
+    effects: [
+      { kind: 'poo-splat', x: 120, y: 160, ttlMs: 150, maxTtlMs: 300 }
+    ]
+  });
+
+  assert.ok(calls.some((entry) => entry.fillStyle === '#8b5a2b'));
+  assert.ok(calls.some((entry) => entry.fillStyle === '#5b3715'));
+});
+
 
 
 test('trees cannot be cleared by jump', () => {
@@ -856,8 +969,8 @@ test('jumping player renders in front of obstacles', () => {
     effects: []
   });
 
-  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 13 && entry[1] === 10 && entry[2] === 14 && entry[3] === 18);
-  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 105 && entry[1] === 299 && entry[2] === 12 && entry[3] === 12);
+  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 12 && entry[1] === 26 && entry[2] === 17 && entry[3] === 3);
+  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 106 && entry[1] === 301 && entry[2] === 10 && entry[3] === 9);
 
   assert.ok(treeBodyIndex >= 0);
   assert.ok(playerBodyIndex >= 0);
@@ -890,8 +1003,8 @@ test('grounded player renders in front of obstacles', () => {
     effects: []
   });
 
-  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 13 && entry[1] === 10 && entry[2] === 14 && entry[3] === 18);
-  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 105 && entry[1] === 310 && entry[2] === 12 && entry[3] === 14);
+  const treeBodyIndex = calls.findIndex((entry) => entry[0] === 12 && entry[1] === 26 && entry[2] === 17 && entry[3] === 3);
+  const playerBodyIndex = calls.findIndex((entry) => entry[0] === 106 && entry[1] === 312 && entry[2] === 10 && entry[3] === 11);
 
   assert.ok(treeBodyIndex >= 0);
   assert.ok(playerBodyIndex >= 0);
