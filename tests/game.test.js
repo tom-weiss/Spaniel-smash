@@ -231,6 +231,32 @@ test('restart resets game and clears effects', () => {
   assert.equal(snap.activeEffects.wetPaintSlipMs, 0);
 });
 
+test('level one does not start with invulnerability but level-up still grants it', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  assert.equal(game.snapshot().isPlayerImmortal, false);
+
+  game.andyBossActive = true;
+  game.forceSpawn({
+    type: 'andy',
+    obstacleId: 'andy-boss',
+    jumpRule: 'high',
+    behaviorState: { kind: 'andyBoss', phase: 'exiting', phaseMs: 0, throwCooldownMs: 9999 },
+    x: 122,
+    y: 660,
+    width: 28,
+    height: 34,
+    speed: 0,
+    lane: 5
+  });
+
+  game.step(16, { left: false, right: false });
+  assert.equal(game.snapshot().speedLevel, 2);
+  assert.equal(game.snapshot().isPlayerImmortal, true);
+
+  game.restart();
+  assert.equal(game.snapshot().isPlayerImmortal, false);
+});
+
 test('snapshot returns copied entities and effects', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.forceSpawn({ type: 'spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
@@ -312,6 +338,60 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     entities: [],
     effects: []
   });
+});
+
+test('pixel renderer draws force field around player while immortal', () => {
+  const makeCtx = () => {
+    const calls = [];
+    const ctx = {
+      fillStyle: '#000',
+      font: '16px monospace',
+      fillRect: (...args) => calls.push(args),
+      fillText: () => {}
+    };
+    return { ctx, calls };
+  };
+
+  const onCase = makeCtx();
+  const onRenderer = new PixelRenderer(onCase.ctx, 300, 600);
+  onRenderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 0,
+    isPlayerImmortal: true,
+    playerImmortalMs: 40,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [],
+    effects: []
+  });
+
+  assert.ok(onCase.calls.some((entry) => entry[0] === 98 && entry[1] === 296 && entry[2] === 28 && entry[3] === 1));
+
+  const offCase = makeCtx();
+  const offRenderer = new PixelRenderer(offCase.ctx, 300, 600);
+  offRenderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    playerJumpOffset: 0,
+    isPlayerImmortal: true,
+    playerImmortalMs: 140,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [],
+    effects: []
+  });
+  assert.equal(offCase.calls.some((entry) => entry[0] === 98 && entry[1] === 296 && entry[2] === 28 && entry[3] === 1), false);
 });
 
 

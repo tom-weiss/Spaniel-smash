@@ -3,7 +3,7 @@
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
-Level progression and obstacle collision rules were rebalanced in `v1.0.14` to improve hazard readability and progression consistency.
+Core rendering (player/skier/tree sprite detail, including rear-view ski helmets), force-field visuals, and mobile control handling were refreshed in `v1.1.1` for readability and input stability while keeping mechanics unchanged.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -31,7 +31,12 @@ Level progression and obstacle collision rules were rebalanced in `v1.0.14` to i
 - Level-up now includes a pulse + sparkle celebration animation behind the banner.
 - After level-up, spawn pacing speeds up briefly for a faster transition.
 - Player invulnerability windows:
-  - first `2.6s` at run start and each new level,
+  - `2.6s` on level-up transitions (levels after level 1),
   - `2.2s` after each non-lethal crash respawn.
+- While invulnerable, the player is surrounded by a flashing green force field.
+
+## Controls
+
+- Touch controls suppress long-press and gesture defaults to reduce accidental viewport zoom on mobile Safari while holding movement/jump buttons.
 
 Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `32ms` per level down to about `240ms`, and uses a faster post-level transition burst (down to about `210ms` floor). `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.

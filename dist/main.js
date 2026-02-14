@@ -70,7 +70,7 @@ class SkiMusic {
             this.nextNoteTime = this.audioCtx.currentTime + 0.02;
         }
     }
-    smash() {
+    howl() {
         if (!window.AudioContext || this.muted) {
             return;
         }
@@ -88,8 +88,11 @@ class SkiMusic {
             return;
         }
         const at = this.audioCtx.currentTime + 0.005;
-        this.playNote(180, at, 0.05, "sawtooth", 0.22);
-        this.playNote(120, at + 0.03, 0.09, "square", 0.2);
+        this.playHowl(240, 140, at, 0.24, 0.24);
+        this.playHowl(320, 190, at + 0.06, 0.18, 0.16);
+    }
+    smash() {
+        this.howl();
     }
     bark() {
         if (!window.AudioContext || this.muted) {
@@ -109,10 +112,12 @@ class SkiMusic {
             return;
         }
         const at = this.audioCtx.currentTime + 0.01;
-        const barkNotes = [330, 280, 240];
-        barkNotes.forEach((freq, index) => {
-            this.playNote(freq, at + index * 0.045, 0.04, "square", 0.26);
-        });
+        const barkNotes = [350, 300, 255];
+        for (let burst = 0; burst < 2; burst += 1) {
+            barkNotes.forEach((freq, index) => {
+                this.playNote(freq, at + burst * 0.16 + index * 0.042, 0.04, "square", 0.25);
+            });
+        }
     }
     scheduleNotes() {
         if (!this.audioCtx || !this.master) {
@@ -150,8 +155,25 @@ class SkiMusic {
         osc.start(at);
         osc.stop(at + duration + 0.02);
     }
+    playHowl(startFreq, endFreq, at, duration, peak) {
+        if (!this.audioCtx || !this.master) {
+            return;
+        }
+        const osc = this.audioCtx.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(Math.round(startFreq), at);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(50, Math.round(endFreq)), at + duration);
+        const gain = this.audioCtx.createGain();
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(peak, at + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+        osc.connect(gain);
+        gain.connect(this.master);
+        osc.start(at);
+        osc.stop(at + duration + 0.03);
+    }
 }
-const GAME_VERSION = "v1.0.14";
+const GAME_VERSION = "v1.1.1";
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
@@ -263,10 +285,24 @@ function bindTouchControl(control, key) {
         event.preventDefault();
         input[key] = false;
     };
+    const hold = (event) => {
+        event.preventDefault();
+        if (!isPlaying || game.snapshot().isGameOver) {
+            return;
+        }
+        input[key] = true;
+    };
     control.addEventListener("pointerdown", activate);
     control.addEventListener("pointerup", deactivate);
     control.addEventListener("pointercancel", deactivate);
     control.addEventListener("pointerleave", deactivate);
+    control.addEventListener("touchstart", activate, { passive: false });
+    control.addEventListener("touchmove", hold, { passive: false });
+    control.addEventListener("touchend", deactivate, { passive: false });
+    control.addEventListener("touchcancel", deactivate, { passive: false });
+    control.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+    });
     control.addEventListener("dblclick", (event) => {
         event.preventDefault();
     });
@@ -318,7 +354,7 @@ function frame(now) {
     }
     if (snapshot.spanielsSmashed > lastSpanielSmashCount) {
         lastSpanielSmashCount = snapshot.spanielsSmashed;
-        music.smash();
+        music.howl();
     }
     if (snapshot.isGameOver && !gameOverHandled) {
         gameOverHandled = true;

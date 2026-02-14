@@ -124,7 +124,7 @@ export class SpanielSmashGame {
         this.nextRareSpawnMs = this.rollRareSpawnMs();
         this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
         this.nextMythicSpawnMs = this.rollMythicSpawnMs();
-        this.playerImmortalMs = SpanielSmashGame.levelStartImmortalMs;
+        this.playerImmortalMs = 0;
     }
     step(deltaMs, input) {
         if (this.gameOver) {
@@ -405,7 +405,9 @@ export class SpanielSmashGame {
     tickRuntimeTimers(deltaMs) {
         this.puddleSlowMs = Math.max(0, this.puddleSlowMs - deltaMs);
         this.wetPaintSlipMs = Math.max(0, this.wetPaintSlipMs - deltaMs);
-        this.playerImmortalMs = Math.max(0, this.playerImmortalMs - deltaMs);
+        if (this.crashFreezeMs === 0) {
+            this.playerImmortalMs = Math.max(0, this.playerImmortalMs - deltaMs);
+        }
         this.levelUpBannerMs = Math.max(0, this.levelUpBannerMs - deltaMs);
         this.levelTransitionBoostMs = Math.max(0, this.levelTransitionBoostMs - deltaMs);
     }
@@ -734,7 +736,7 @@ export class SpanielSmashGame {
         this.mythicUnlocked = false;
         this.puddleSlowMs = 0;
         this.wetPaintSlipMs = 0;
-        this.playerImmortalMs = SpanielSmashGame.levelStartImmortalMs;
+        this.playerImmortalMs = 0;
         this.levelUpBannerMs = 0;
         this.levelTransitionBoostMs = 0;
         this.nextBossSpanielGoal = 12;
@@ -754,6 +756,7 @@ export class SpanielSmashGame {
             playerY: this.playerY(),
             playerJumpOffset: this.playerJumpOffset(),
             isPlayerImmortal: this.playerImmortalMs > 0,
+            playerImmortalMs: this.playerImmortalMs,
             isCrashActive: this.crashFreezeMs > 0,
             isBossActive: this.andyBossActive,
             levelUpBannerMs: this.levelUpBannerMs,
@@ -916,6 +919,10 @@ export class PixelRenderer {
             else
                 drawAndy(this.ctx, entity.x, entity.y);
         }
+        const playerRenderY = snapshot.isCrashActive ? snapshot.playerY : snapshot.playerY - snapshot.playerJumpOffset;
+        if (snapshot.isPlayerImmortal && !snapshot.isCrashActive) {
+            drawImmortalForceField(this.ctx, snapshot.playerX, playerRenderY, snapshot.playerImmortalMs ?? 0);
+        }
         if (snapshot.isCrashActive) {
             drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
         }
@@ -1016,7 +1023,27 @@ export class PixelRenderer {
         return { x: x + 2, y: y + 2, width: 16, height: 12 };
     }
 }
-function drawTree(ctx, x, y) { ctx.fillStyle = "#2d6a4f"; ctx.fillRect(x + 3, y, 14, 18); ctx.fillRect(x, y + 8, 20, 12); ctx.fillStyle = "#7f5539"; ctx.fillRect(x + 8, y + 20, 4, 10); }
+function drawTree(ctx, x, y) {
+    ctx.fillStyle = "#1f5138";
+    ctx.fillRect(x + 2, y + 1, 16, 6);
+    ctx.fillRect(x + 1, y + 6, 18, 6);
+    ctx.fillRect(x + 2, y + 12, 16, 2);
+    ctx.fillStyle = "#2d6a4f";
+    ctx.fillRect(x + 3, y, 14, 18);
+    ctx.fillRect(x, y + 8, 20, 12);
+    ctx.fillStyle = "#40916c";
+    ctx.fillRect(x + 5, y + 3, 4, 3);
+    ctx.fillRect(x + 10, y + 4, 4, 2);
+    ctx.fillRect(x + 4, y + 10, 3, 2);
+    ctx.fillRect(x + 12, y + 11, 3, 2);
+    ctx.fillStyle = "#1b4332";
+    ctx.fillRect(x + 16, y + 9, 2, 10);
+    ctx.fillRect(x + 14, y + 14, 2, 4);
+    ctx.fillStyle = "#7f5539";
+    ctx.fillRect(x + 8, y + 20, 4, 10);
+    ctx.fillStyle = "#5e3b2a";
+    ctx.fillRect(x + 10, y + 20, 2, 10);
+}
 function drawRock(ctx, x, y) {
     ctx.fillStyle = "#6b7280";
     ctx.fillRect(x + 1, y + 7, 18, 11);
@@ -1128,17 +1155,44 @@ function drawSkier(ctx, x, y, bodyColor, helmetColor, jumpOffset = 0) {
     const skiInset = inAir ? 2 : 0;
     const skiWidth = inAir ? 20 : 24;
     const poleY = inAir ? y + 8 : y + 9;
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 4, bodyY, 14, bodyHeight);
+    ctx.fillRect(x + 6, helmetY - 1, 10, 9);
     ctx.fillStyle = bodyColor;
     ctx.fillRect(x + 5, bodyY, 12, bodyHeight);
     ctx.fillRect(x + 4, bodyY + 4, 2, 5);
+    ctx.fillRect(x + 16, bodyY + 4, 2, 5);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.22)";
+    ctx.fillRect(x + 11, bodyY + 1, 5, Math.max(2, bodyHeight - 2));
+    ctx.fillRect(x + 6, bodyY + bodyHeight - 3, 6, 1);
     ctx.fillStyle = helmetColor;
-    ctx.fillRect(x + 7, helmetY, 8, 8);
+    ctx.fillRect(x + 7, helmetY, 8, 7);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 11, helmetY + 2, 1, 4);
+    ctx.fillRect(x + 8, helmetY + 6, 6, 1);
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(x + 9, helmetY + 1, 4, 1);
+    ctx.fillStyle = "#475569";
+    ctx.fillRect(x + 7, helmetY + 3, 1, 3);
+    ctx.fillRect(x + 14, helmetY + 3, 1, 3);
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(x + 8, helmetY + 7, 6, 1);
+    ctx.fillRect(x + 10, helmetY + 8, 2, 1);
+    ctx.fillStyle = "#475569";
+    ctx.fillRect(x + 3, poleY + 1, 1, 11);
+    ctx.fillRect(x + 2, poleY + 11, 3, 1);
     ctx.fillStyle = "#475569";
     ctx.fillRect(x + 17, poleY, 1, 12);
     ctx.fillRect(x + 16, poleY + 11, 3, 1);
     ctx.fillStyle = "#264653";
     ctx.fillRect(x + skiInset, y + 22, skiWidth, 2);
     ctx.fillRect(x + skiInset, y + 25, skiWidth, 2);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + skiInset + 1, y + 23, skiWidth - 2, 1);
+    ctx.fillRect(x + skiInset + 1, y + 26, skiWidth - 2, 1);
+    ctx.fillStyle = "#93c5fd";
+    ctx.fillRect(x + skiInset, y + 22, 2, 1);
+    ctx.fillRect(x + skiInset + skiWidth - 2, y + 25, 2, 1);
 }
 function drawDowndraftZone(ctx, x, y, pushDirection) {
     ctx.fillStyle = "#1e293b";
@@ -1192,8 +1246,66 @@ function drawAndy(ctx, x, y) {
     ctx.fillRect(x + 9, y + 5, 6, 1);
     ctx.fillRect(x + 9, y + 13, 6, 2);
 }
-function drawCrashedSkier(ctx, x, y, bodyColor, helmetColor) { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
+function drawCrashedSkier(ctx, x, y, bodyColor, helmetColor) {
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 2, y + 15, 20, 11);
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(x + 3, y + 16, 18, 10);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.25)";
+    ctx.fillRect(x + 11, y + 17, 8, 7);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x - 2, y + 11, 10, 10);
+    ctx.fillStyle = helmetColor;
+    ctx.fillRect(x - 1, y + 12, 8, 7);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x + 3, y + 14, 1, 4);
+    ctx.fillStyle = "#cbd5e1";
+    ctx.fillRect(x + 1, y + 13, 4, 1);
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(x + 1, y + 18, 4, 1);
+    ctx.fillStyle = "#264653";
+    ctx.fillRect(x - 2, y + 25, 28, 2);
+    ctx.fillRect(x + 8, y + 7, 2, 22);
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(x - 1, y + 26, 25, 1);
+}
 function drawJumpShadow(ctx, x, y, jumpOffset) { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
+function drawImmortalForceField(ctx, x, y, immortalMs) {
+    const flashOn = Math.floor(immortalMs / 110) % 2 === 0;
+    if (!flashOn) {
+        return;
+    }
+    const fieldX = x - 4;
+    const fieldY = y - 4;
+    const fieldWidth = 32;
+    const fieldHeight = 36;
+    const pulse = Math.floor(immortalMs / 220) % 2;
+    ctx.fillStyle = pulse === 0 ? "rgba(34, 197, 94, 0.14)" : "rgba(74, 222, 128, 0.24)";
+    ctx.fillRect(fieldX + 3, fieldY + 3, fieldWidth - 6, fieldHeight - 6);
+    ctx.fillStyle = pulse === 0 ? "rgba(22, 163, 74, 0.42)" : "rgba(74, 222, 128, 0.8)";
+    ctx.fillRect(fieldX + 2, fieldY, fieldWidth - 4, 1);
+    ctx.fillRect(fieldX + 2, fieldY + fieldHeight - 1, fieldWidth - 4, 1);
+    ctx.fillRect(fieldX, fieldY + 2, 1, fieldHeight - 4);
+    ctx.fillRect(fieldX + fieldWidth - 1, fieldY + 2, 1, fieldHeight - 4);
+    ctx.fillRect(fieldX + 1, fieldY + 1, 1, 1);
+    ctx.fillRect(fieldX + fieldWidth - 2, fieldY + 1, 1, 1);
+    ctx.fillRect(fieldX + 1, fieldY + fieldHeight - 2, 1, 1);
+    ctx.fillRect(fieldX + fieldWidth - 2, fieldY + fieldHeight - 2, 1, 1);
+    const nodePhase = Math.floor(immortalMs / 70) % 4;
+    const sparkNodes = [
+        [fieldX + 5, fieldY + 1],
+        [fieldX + fieldWidth - 7, fieldY + 2],
+        [fieldX + fieldWidth - 3, fieldY + 15],
+        [fieldX + fieldWidth - 11, fieldY + fieldHeight - 3],
+        [fieldX + 8, fieldY + fieldHeight - 2],
+        [fieldX + 1, fieldY + 18]
+    ];
+    ctx.fillStyle = pulse === 0 ? "rgba(187, 247, 208, 0.7)" : "rgba(240, 253, 244, 0.95)";
+    for (let index = 0; index < 3; index += 1) {
+        const [sparkX, sparkY] = sparkNodes[(nodePhase + index * 2) % sparkNodes.length] ?? sparkNodes[0];
+        ctx.fillRect(sparkX, sparkY, 2, 2);
+    }
+}
 function drawSmashEffect(ctx, effect) {
     if (effect.kind === "coin-pop") {
         const progress = 1 - effect.ttlMs / effect.maxTtlMs;
