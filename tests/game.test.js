@@ -84,6 +84,18 @@ test('andy collision clears witch attack', () => {
   assert.equal(game.snapshot().entities[0].type, 'obstacle');
 });
 
+test('witch attack checks existing entities before spawning andy', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9, 0.2]));
+  for (let i = 0; i < 10; i += 1) {
+    game.forceSpawn({ type: 'spaniel', x: 122, y: 560, width: 30, height: 30, speed: 0 });
+    game.step(16, { left: false, right: false });
+  }
+
+  game.forceSpawn({ type: 'obstacle', x: 20, y: 100, width: 20, height: 20, speed: 0 });
+  game.step(450, { left: false, right: false });
+  assert.ok(game.snapshot().entities.some((entity) => entity.type === 'andy'));
+});
+
 test('game over prevents updates and offscreen entities are culled', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.9]));
 
