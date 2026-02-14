@@ -44,7 +44,7 @@ export class SpanielSmashGame {
   private spawnClock = 0;
   private laneSwitchCooldownMs = 0;
 
-  constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 10) {
+  constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 20) {
     this.width = width;
     this.height = height;
     this.laneCount = laneCount;

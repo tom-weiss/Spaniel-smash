@@ -63,6 +63,9 @@ function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): v
   control.addEventListener("pointerup", deactivate);
   control.addEventListener("pointercancel", deactivate);
   control.addEventListener("pointerleave", deactivate);
+  control.addEventListener("dblclick", (event) => {
+    event.preventDefault();
+  });
 }
 
 bindTouchControl(leftControl, "left");

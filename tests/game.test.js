@@ -12,7 +12,7 @@ function rngFrom(values) {
 }
 
 test('player movement uses cooldown and ignores conflicting input across 10 lanes', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0]), 10);
   assert.equal(game.snapshot().playerX, 156.6);
 
   game.step(16, { left: true, right: false });
@@ -29,19 +29,19 @@ test('player movement uses cooldown and ignores conflicting input across 10 lane
 });
 
 test('spawnEntity supports tree, rock, skier and spaniel with static obstacle speed lock', () => {
-  const treeGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1]));
+  const treeGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1]), 10);
   treeGame.step(450, { left: false, right: false });
   const tree = treeGame.snapshot().entities[0];
 
-  const rockGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.3]));
+  const rockGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.3]), 10);
   rockGame.step(450, { left: false, right: false });
   const rock = rockGame.snapshot().entities[0];
 
-  const skierGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.5, 0.4]));
+  const skierGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.5, 0.4]), 10);
   skierGame.step(450, { left: false, right: false });
   const skier = skierGame.snapshot().entities[0];
 
-  const spanielGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9, 0.2]));
+  const spanielGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9, 0.2]), 10);
   spanielGame.step(450, { left: false, right: false });
   const spaniel = spanielGame.snapshot().entities[0];
 
@@ -54,7 +54,7 @@ test('spawnEntity supports tree, rock, skier and spaniel with static obstacle sp
 });
 
 test('non-spaniel collisions reduce lives and can end game', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
 
   game.forceSpawn({ type: 'tree', x: 122, y: 560, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false });
@@ -69,7 +69,7 @@ test('non-spaniel collisions reduce lives and can end game', () => {
 });
 
 test('smashing spaniels scores and triggers witch attack and andy spawn', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.4, 0.1]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.4, 0.1]), 10);
 
   for (let i = 0; i < 10; i += 1) {
     game.forceSpawn({ type: 'spaniel', x: 122, y: 560, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
@@ -86,7 +86,7 @@ test('smashing spaniels scores and triggers witch attack and andy spawn', () => 
 });
 
 test('andy tracks player by lane, collision clears witch attack, and existing andy blocks respawn', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9, 0.3]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9, 0.3]), 10);
   for (let i = 0; i < 10; i += 1) {
     game.forceSpawn({ type: 'spaniel', x: 122, y: 560, width: 18, height: 18, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
     game.step(16, { left: false, right: false });
@@ -120,7 +120,7 @@ test('moving actors can switch lanes while static obstacles keep lane and stack 
     0.0,
     0.2,
     0.9
-  ]));
+  ]), 10);
 
   game.forceSpawn({ type: 'tree', x: 122, y: 100, width: 16, height: 16, speed: 2.2, lane: 6 });
   game.forceSpawn({ type: 'skier', x: 122, y: 100, width: 16, height: 16, speed: 2.1, lane: 5, laneSwitchCooldownMs: 0 });
@@ -180,12 +180,12 @@ test('spawn lane selection falls back to preferred lane when no lane is clear', 
 });
 
 test('game over prevents updates and offscreen entities are culled', () => {
-  const cullGame = new SpanielSmashGame(300, 600, rngFrom([0.9]));
+  const cullGame = new SpanielSmashGame(300, 600, rngFrom([0.9]), 10);
   cullGame.forceSpawn({ type: 'spaniel', x: 122, y: 700, width: 30, height: 30, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
   cullGame.step(16, { left: false, right: false });
   assert.equal(cullGame.snapshot().entities.length, 0);
 
-  const endGame = new SpanielSmashGame(300, 600, rngFrom([0.9]));
+  const endGame = new SpanielSmashGame(300, 600, rngFrom([0.9]), 10);
   endGame.forceSpawn({ type: 'tree', x: 122, y: 560, width: 30, height: 30, speed: 0, lane: 5 });
   endGame.step(16, { left: false, right: false });
   endGame.forceSpawn({ type: 'rock', x: 122, y: 560, width: 30, height: 30, speed: 0, lane: 5 });
@@ -200,7 +200,7 @@ test('game over prevents updates and offscreen entities are culled', () => {
 });
 
 test('restart resets gameplay state', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.8]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.8]), 10);
 
   game.forceSpawn({ type: 'spaniel', x: 122, y: 560, width: 30, height: 30, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
   game.step(16, { left: false, right: false });
@@ -219,7 +219,7 @@ test('restart resets gameplay state', () => {
 });
 
 test('snapshot returns copied entity data', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.8, 0.5]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.8, 0.5]), 10);
   game.step(450, { left: false, right: false });
 
   const snap1 = game.snapshot();
@@ -230,11 +230,30 @@ test('snapshot returns copied entity data', () => {
 
 
 test('andy already in player lane keeps current lane when moving', () => {
-  const game = new SpanielSmashGame(300, 600, rngFrom([0.9]));
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.9]), 10);
   game.forceSpawn({ type: 'andy', x: 122, y: 100, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 0 });
   game.step(200, { left: false, right: false });
   const andy = game.snapshot().entities[0];
   assert.equal(andy.lane, 5);
+});
+
+test('moving entities cover lane switch fallback and both random directions', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.4, 0.1, 0.6]), 10);
+  game.entities.push({ type: 'skier', x: 122, y: 100, width: 20, height: 20, speed: 0, lane: 5 });
+
+  game.step(16, { left: false, right: false });
+  assert.equal(game.snapshot().entities[0].lane, 4);
+
+  game.entities[0].laneSwitchCooldownMs = 0;
+  game.step(111, { left: false, right: false });
+  assert.equal(game.snapshot().entities[0].lane, 5);
+});
+
+
+
+test('default game uses 20 lanes', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0]));
+  assert.equal(game.snapshot().playerX, 153.3);
 });
 
 test('pixel renderer paints all hud and game over layers', () => {
