@@ -45,13 +45,23 @@ class SkiMusic {
             void this.audioCtx.resume();
         }
     }
-    stopBackground() {
+    stopBackground(delayMs = 0) {
         if (this.scheduler !== null) {
             window.clearInterval(this.scheduler);
             this.scheduler = null;
         }
         if (this.audioCtx?.state === "running") {
-            void this.audioCtx.suspend();
+            const stop = () => {
+                if (this.audioCtx?.state === "running") {
+                    void this.audioCtx.suspend();
+                }
+            };
+            if (delayMs > 0) {
+                window.setTimeout(stop, delayMs);
+            }
+            else {
+                stop();
+            }
         }
     }
     resetSequence() {
@@ -59,6 +69,27 @@ class SkiMusic {
         if (this.audioCtx) {
             this.nextNoteTime = this.audioCtx.currentTime + 0.02;
         }
+    }
+    smash() {
+        if (!window.AudioContext || this.muted) {
+            return;
+        }
+        if (!this.audioCtx) {
+            this.audioCtx = new window.AudioContext();
+            this.master = this.audioCtx.createGain();
+            this.master.gain.value = 0.04;
+            this.master.connect(this.audioCtx.destination);
+            this.resetSequence();
+        }
+        if (this.audioCtx.state === "suspended") {
+            void this.audioCtx.resume();
+        }
+        if (!this.master || !this.audioCtx) {
+            return;
+        }
+        const at = this.audioCtx.currentTime + 0.005;
+        this.playNote(180, at, 0.05, "sawtooth", 0.22);
+        this.playNote(120, at + 0.03, 0.09, "square", 0.2);
     }
     bark() {
         if (!window.AudioContext || this.muted) {
@@ -126,7 +157,6 @@ const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
 const input = { left: false, right: false };
-const instructionText = document.getElementById("instruction-text");
 const splashScreen = document.getElementById("splash-screen");
 const splashTitle = document.getElementById("splash-title");
 const splashCopy = document.getElementById("splash-copy");
@@ -136,12 +166,9 @@ const statusScore = document.getElementById("status-score");
 const statusLives = document.getElementById("status-lives");
 const statusLevel = document.getElementById("status-level");
 const muteToggle = document.getElementById("splash-mute-toggle");
-const isTouchMode = window.matchMedia("(pointer: coarse)").matches;
-if (isTouchMode && instructionText) {
-    instructionText.textContent = "Tap left/right to move skier. Smash spaniels. Avoid obstacles + Andy.";
-}
 let isPlaying = false;
 let gameOverHandled = false;
+let lastSpanielSmashCount = 0;
 const STORAGE_MUTE_KEY = "spaniel-smash-muted";
 const initialMuted = window.localStorage.getItem(STORAGE_MUTE_KEY) === "true";
 music.setMuted(initialMuted);
@@ -160,7 +187,7 @@ function showSplash(mode) {
     splashScreen.classList.remove("hidden");
     if (mode === "start") {
         splashTitle.textContent = "SPANIEL SMASH";
-        splashCopy.textContent = "Arrow keys or tap controls to move. Smash spaniels, dodge trees, rocks, skiers, and Andy.";
+        splashCopy.textContent = "Arrow keys or tap controls move left/right. Smash spaniels to score. Trees block you. Dodge rocks, skiers, and witch Andy.";
         splashButton.textContent = "START";
         splashImage.src = FRIENDLY_SPANIEL;
         splashImage.alt = "Pixel art spaniel";
@@ -227,6 +254,7 @@ splashButton?.addEventListener("click", () => {
         music.resetSequence();
     }
     gameOverHandled = false;
+    lastSpanielSmashCount = 0;
     input.left = false;
     input.right = false;
     isPlaying = true;
@@ -258,11 +286,16 @@ function frame(now) {
     if (rightControl) {
         rightControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
     }
+    if (snapshot.spanielsSmashed > lastSpanielSmashCount) {
+        lastSpanielSmashCount = snapshot.spanielsSmashed;
+        music.smash();
+    }
     if (snapshot.isGameOver && !gameOverHandled) {
         gameOverHandled = true;
         isPlaying = false;
-        music.bark();
         music.stopBackground();
+        music.bark();
+        music.stopBackground(260);
         showSplash("game-over");
     }
     requestAnimationFrame(frame);

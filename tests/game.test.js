@@ -230,6 +230,14 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
 });
 
 
+
+test('trees cannot be cleared by jump', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'tree', obstacleTier: 'standard', jumpRule: 'none', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
+  game.step(16, { left: false, right: false, jump: true });
+  assert.equal(game.snapshot().lives, 2);
+});
+
 test('spawn branches include rock and skier entities', () => {
   const rockGame = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.2, 0.2, 0.2]), 10);
   rockGame.step(450, { left: false, right: false });
@@ -274,13 +282,13 @@ test('moving entity lane logic covers andy pursuit, bounds, and blocked lane fal
 
 test('jumping clears jump-rule obstacles and rare/super-rare cadence spawns expected tiers', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0, 0, 0.2, 0.2, 0.2]), 10);
-  game.forceSpawn({ type: 'tree', obstacleTier: 'rare', jumpRule: 'high', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'rock', obstacleTier: 'super-rare', jumpRule: 'high', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
 
   game.step(16, { left: false, right: false, jump: true });
   assert.equal(game.snapshot().lives, 3);
 
   game.step(500, { left: false, right: false, jump: false });
-  game.forceSpawn({ type: 'tree', obstacleTier: 'rare', jumpRule: 'high', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'rock', obstacleTier: 'super-rare', jumpRule: 'high', x: 122, y: 366, width: 30, height: 30, speed: 0, lane: 5 });
   game.step(16, { left: false, right: false, jump: false });
   assert.equal(game.snapshot().lives, 2);
 
