@@ -89,6 +89,18 @@ const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
 const input = { left: false, right: false };
 const startupBanner = document.getElementById("startup-banner");
+const instructionText = document.getElementById("instruction-text");
+const isTouchMode = window.matchMedia("(pointer: coarse)").matches;
+
+if (isTouchMode) {
+  if (startupBanner) {
+    startupBanner.textContent = "Ready? Tap to start.";
+  }
+  if (instructionText) {
+    instructionText.textContent = "Tap left/right to move skier. Smash spaniels. Avoid obstacles + Andy.";
+  }
+}
+
 const dismissBanner = (): void => {
   if (!startupBanner) {
     return;
@@ -170,6 +182,12 @@ function frame(now: number): void {
 
   if (restartControl) {
     restartControl.toggleAttribute("hidden", !snapshot.isGameOver);
+  }
+  if (leftControl) {
+    leftControl.toggleAttribute("hidden", snapshot.isGameOver);
+  }
+  if (rightControl) {
+    rightControl.toggleAttribute("hidden", snapshot.isGameOver);
   }
 
   requestAnimationFrame(frame);

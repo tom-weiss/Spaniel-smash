@@ -167,6 +167,7 @@ export class SpanielSmashGame {
             }
             if (entity.type === "spaniel") {
                 this.spawnSmashEffect(entity.x, entity.y, "spaniel-smash");
+                this.spawnSmashEffect(entity.x, entity.y, "coin-pop");
                 this.spawnBloodstain(entity);
                 this.score += 100;
                 this.spanielsSmashed += 1;
@@ -206,9 +207,6 @@ export class SpanielSmashGame {
         }
         for (const index of indicesToTransform) {
             const entity = this.entities[index];
-            if (!entity) {
-                continue;
-            }
             this.spawnSmashEffect(entity.x, entity.y, "obstacle-crash");
             this.entities[index] = {
                 ...entity,
@@ -248,7 +246,19 @@ export class SpanielSmashGame {
     }
     tickEffects(deltaMs) {
         this.effects = this.effects
-            .map((effect) => ({ ...effect, ttlMs: Math.max(0, effect.ttlMs - deltaMs) }))
+            .map((effect) => {
+            const ttlMs = Math.max(0, effect.ttlMs - deltaMs);
+            if (effect.kind !== "coin-pop") {
+                return { ...effect, ttlMs };
+            }
+            const travelUnit = deltaMs / 16.67;
+            return {
+                ...effect,
+                ttlMs,
+                x: effect.x + 3 * travelUnit,
+                y: effect.y - 0.8 * travelUnit
+            };
+        })
             .filter((effect) => effect.ttlMs > 0);
     }
     forceSpawn(entity) {
@@ -518,6 +528,15 @@ function drawCrashedSkier(ctx, x, y, bodyColor, helmetColor) {
     ctx.fillRect(x + 8, y + 7, 2, 22);
 }
 function drawSmashEffect(ctx, effect) {
+    if (effect.kind === "coin-pop") {
+        const progress = 1 - effect.ttlMs / effect.maxTtlMs;
+        const shimmer = progress > 0.45 && progress < 0.7;
+        ctx.fillStyle = shimmer ? "#fde68a" : "#facc15";
+        ctx.fillRect(effect.x + 16, effect.y + 4, 6, 6);
+        ctx.fillStyle = "#ca8a04";
+        ctx.fillRect(effect.x + 17, effect.y + 5, 4, 4);
+        return;
+    }
     const progress = 1 - effect.ttlMs / effect.maxTtlMs;
     const radius = Math.floor(progress * 10) + 2;
     const color = effect.kind === "spaniel-smash" ? "#dc2626" : "#f97316";
