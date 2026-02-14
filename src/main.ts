@@ -188,7 +188,7 @@ const GRINNING_SPANIEL =
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
 const music = new SkiMusic();
-const input = { left: false, right: false };
+const input = { left: false, right: false, jump: false };
 const splashScreen = document.getElementById("splash-screen");
 const splashTitle = document.getElementById("splash-title");
 const splashCopy = document.getElementById("splash-copy");
@@ -253,6 +253,9 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") {
     input.right = true;
   }
+  if (event.key === "ArrowUp" || event.key === " " || event.key === "Spacebar") {
+    input.jump = true;
+  }
 });
 
 window.addEventListener("keyup", (event) => {
@@ -262,12 +265,16 @@ window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") {
     input.right = false;
   }
+  if (event.key === "ArrowUp" || event.key === " " || event.key === "Spacebar") {
+    input.jump = false;
+  }
 });
 
 const leftControl = document.getElementById("control-left");
 const rightControl = document.getElementById("control-right");
+const jumpControl = document.getElementById("control-jump");
 
-function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): void {
+function bindTouchControl(control: HTMLElement | null, key: "left" | "right" | "jump"): void {
   if (!control) {
     return;
   }
@@ -296,6 +303,7 @@ function bindTouchControl(control: HTMLElement | null, key: "left" | "right"): v
 
 bindTouchControl(leftControl, "left");
 bindTouchControl(rightControl, "right");
+bindTouchControl(jumpControl, "jump");
 
 splashButton?.addEventListener("click", () => {
   if (game.snapshot().isGameOver) {
@@ -307,6 +315,7 @@ splashButton?.addEventListener("click", () => {
   lastSpanielSmashCount = 0;
   input.left = false;
   input.right = false;
+  input.jump = false;
   isPlaying = true;
   music.start();
   hideSplash();
@@ -342,6 +351,9 @@ function frame(now: number): void {
   }
   if (rightControl) {
     rightControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
+  }
+  if (jumpControl) {
+    jumpControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
   }
 
   if (snapshot.spanielsSmashed > lastSpanielSmashCount) {
