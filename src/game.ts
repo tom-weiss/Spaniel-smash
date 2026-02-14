@@ -539,7 +539,7 @@ export class PixelRenderer {
     if (snapshot.isCrashActive) {
       drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
     } else {
-      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166");
+      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166", snapshot.playerJumpOffset);
       if (snapshot.playerJumpOffset > 0) {
         drawJumpShadow(this.ctx, snapshot.playerX, snapshot.playerY, snapshot.playerJumpOffset);
       }
@@ -601,7 +601,22 @@ function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void { c
 function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#6c757d"; ctx.fillRect(x + 2, y + 4, 16, 10); ctx.fillStyle = "#adb5bd"; ctx.fillRect(x + 5, y + 2, 10, 4); }
 function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(x + 1, y + 8, 20, 7); ctx.fillStyle = "#b91c1c"; ctx.fillRect(x + 4, y + 5, 14, 4); }
 function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#f4a261"; ctx.fillRect(x, y, 20, 14); ctx.fillRect(x + 14, y - 3, 8, 8); ctx.fillStyle = "#2a9d8f"; ctx.fillRect(x + 18, y - 1, 2, 4); }
-function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 5, y + 10, 12, 14); ctx.fillStyle = helmetColor; ctx.fillRect(x + 7, y + 3, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x, y + 22, 24, 2); ctx.fillRect(x, y + 25, 24, 2); }
+function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string, jumpOffset = 0): void {
+  const inAir = jumpOffset > 0;
+  const bodyHeight = inAir ? 12 : 14;
+  const bodyY = inAir ? y + 11 : y + 10;
+  const helmetY = inAir ? y + 2 : y + 3;
+  const skiInset = inAir ? 2 : 0;
+  const skiWidth = inAir ? 20 : 24;
+
+  ctx.fillStyle = bodyColor;
+  ctx.fillRect(x + 5, bodyY, 12, bodyHeight);
+  ctx.fillStyle = helmetColor;
+  ctx.fillRect(x + 7, helmetY, 8, 8);
+  ctx.fillStyle = "#264653";
+  ctx.fillRect(x + skiInset, y + 22, skiWidth, 2);
+  ctx.fillRect(x + skiInset, y + 25, skiWidth, 2);
+}
 function drawWitch(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 2, y + 17, 20, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 17, y + 16, 3, 3); }
 function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
 function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }

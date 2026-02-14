@@ -230,6 +230,14 @@ window.addEventListener("keyup", (event) => {
 const leftControl = document.getElementById("control-left");
 const rightControl = document.getElementById("control-right");
 const jumpControl = document.getElementById("control-jump");
+for (const eventName of ["gesturestart", "gesturechange", "gestureend"]) {
+    window.addEventListener(eventName, (event) => {
+        event.preventDefault();
+    }, { passive: false });
+}
+window.addEventListener("selectstart", (event) => {
+    event.preventDefault();
+});
 function bindTouchControl(control, key) {
     if (!control) {
         return;
