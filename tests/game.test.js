@@ -369,3 +369,32 @@ test('spawn lane can return preferred when all lanes are blocked', () => {
   const spawned = game.snapshot().entities.at(-1);
   assert.equal(spawned.lane, 1);
 });
+
+test('renderer draws short obstacle labels for obstacle ids', () => {
+  const calls = [];
+  const ctx = {
+    fillStyle: '#000',
+    font: '16px monospace',
+    fillRect: (...args) => calls.push(['fillRect', ...args]),
+    fillText: (...args) => calls.push(['fillText', ...args])
+  };
+  const renderer = new PixelRenderer(ctx, 360, 640);
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 120,
+    playerY: 366,
+    playerJumpOffset: 0,
+    isCrashActive: false,
+    sideObstacleOffsetY: 0,
+    entities: [
+      { type: 'tree', obstacleId: 'cracked-sidewalk-slab', x: 122, y: 140, width: 20, height: 20, speed: 0 }
+    ],
+    effects: []
+  });
+
+  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('CRACKED SID')));
+});

@@ -235,6 +235,22 @@ for (const eventName of ["gesturestart", "gesturechange", "gestureend"]) {
         event.preventDefault();
     }, { passive: false });
 }
+let lastTouchEndMs = 0;
+window.addEventListener("touchend", (event) => {
+    const now = Date.now();
+    if (now - lastTouchEndMs < 300) {
+        event.preventDefault();
+    }
+    lastTouchEndMs = now;
+}, { passive: false });
+window.visualViewport?.addEventListener("resize", () => {
+    if (window.visualViewport && window.visualViewport.scale > 1) {
+        const meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+            meta.content = "width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no";
+        }
+    }
+});
 window.addEventListener("selectstart", (event) => {
     event.preventDefault();
 });
