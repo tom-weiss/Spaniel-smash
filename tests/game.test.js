@@ -42,7 +42,13 @@ test('smashing spaniel produces score, animation effect, and bloodstain obstacle
   assert.equal(snap.score, 100);
   assert.equal(snap.spanielsSmashed, 1);
   assert.ok(snap.effects.some((effect) => effect.kind === 'spaniel-smash'));
+  const coinEffect = snap.effects.find((effect) => effect.kind === 'coin-pop');
+  assert.ok(coinEffect);
   assert.ok(snap.entities.some((entity) => entity.type === 'bloodstain'));
+
+  game.step(16, { left: false, right: false });
+  const movedCoin = game.snapshot().effects.find((effect) => effect.kind === 'coin-pop');
+  assert.ok(movedCoin.x > coinEffect.x);
 
   game.step(320, { left: false, right: false });
   assert.equal(game.snapshot().effects.length, 0);
@@ -77,6 +83,16 @@ test('moving obstacle collisions animate and become static rocks', () => {
   game.step(320, { left: false, right: false });
   const settledRock = game.snapshot().entities.find((entity) => entity.type === 'rock');
   assert.equal(settledRock.crashAnimationMs, 0);
+});
+
+
+test('entity collision marks second moving obstacle index', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'tree', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5 });
+  game.forceSpawn({ type: 'skier', x: 122, y: 120, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+
+  game.step(16, { left: false, right: false });
+  assert.ok(game.snapshot().entities.some((entity) => entity.type === 'rock' && entity.crashAnimationMs > 0));
 });
 
 test('non-spaniel collisions remove lives and game over freezes state updates', () => {
@@ -160,7 +176,10 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
       { type: 'bloodstain', x: 110, y: 90, width: 20, height: 20, speed: 1 },
       { type: 'andy', x: 130, y: 130, width: 20, height: 20, speed: 1 }
     ],
-    effects: [{ kind: 'obstacle-crash', x: 90, y: 90, ttlMs: 100, maxTtlMs: 300 }]
+    effects: [
+      { kind: 'obstacle-crash', x: 90, y: 90, ttlMs: 100, maxTtlMs: 300 },
+      { kind: 'coin-pop', x: 105, y: 95, ttlMs: 120, maxTtlMs: 300 }
+    ]
   });
 
   assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Score 200')));
@@ -181,4 +200,68 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
   });
   assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('CRASHED!')));
   assert.ok(calls.some((entry) => entry[0] === 'fillRect'));
+
+  renderer.render({
+    lives: 3,
+    score: 0,
+    speedLevel: 1,
+    spanielsSmashed: 0,
+    isGameOver: false,
+    playerX: 100,
+    playerY: 300,
+    isCrashActive: false,
+    sideObstacleOffsetY: 8,
+    entities: [],
+    effects: []
+  });
+  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Level 1')));
+});
+
+
+test('spawn branches include rock and skier entities', () => {
+  const rockGame = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.2, 0.2]), 10);
+  rockGame.step(450, { left: false, right: false });
+  assert.ok(rockGame.snapshot().entities.some((entity) => entity.type === 'rock'));
+
+  const skierGame = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.2, 0.4, 0.1]), 10);
+  skierGame.step(450, { left: false, right: false });
+  assert.ok(skierGame.snapshot().entities.some((entity) => entity.type === 'skier'));
+});
+
+test('input cooldown blocks repeated turns and ignores opposing keys', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.step(16, { left: true, right: false });
+  const afterFirstMove = game.snapshot().playerX;
+
+  game.step(16, { left: true, right: false });
+  assert.equal(game.snapshot().playerX, afterFirstMove);
+
+  game.step(200, { left: true, right: true });
+  assert.equal(game.snapshot().playerX, afterFirstMove);
+});
+
+test('moving entity lane logic covers andy pursuit, bounds, and blocked lane fallback', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.9]), 10);
+
+  game.forceSpawn({ type: 'andy', x: 122, y: 200, width: 20, height: 20, speed: 0, lane: 8, direction: -1, laneSwitchCooldownMs: 0 });
+  game.step(200, { left: true, right: false }); // player moves to lane 4, andy lane attempts to move right (blocked by bounds rule fallback)
+  const andy = game.snapshot().entities.find((entity) => entity.type === 'andy');
+  assert.ok(andy);
+  assert.equal(andy.lane, 8);
+
+  game.forceSpawn({ type: 'skier', x: 122, y: 230, width: 20, height: 20, speed: 0, lane: 5, laneSwitchCooldownMs: 0 });
+  game.forceSpawn({ type: 'tree', x: 122, y: 231, width: 20, height: 20, speed: 0, lane: 6 });
+  game.forceSpawn({ type: 'rock', x: 122, y: 230, width: 20, height: 20, speed: 0, lane: 3 });
+  game.step(200, { left: false, right: false });
+  const skier = game.snapshot().entities.find((entity) => entity.type === 'skier');
+  assert.ok(skier);
+  assert.equal(skier.lane, 5);
+});
+
+test('spawn lane can return preferred when all lanes are blocked', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0, 0.2]), 3);
+  game.forceSpawn({ type: 'tree', x: 10, y: 0, width: 10, height: 10, speed: 0, lane: 1 });
+  game.step(450, { left: false, right: false });
+  const spawned = game.snapshot().entities.at(-1);
+  assert.equal(spawned.lane, 1);
 });
