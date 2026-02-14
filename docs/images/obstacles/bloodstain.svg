@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" role="img" aria-label="bloodstain obstacle">
   <rect width="56" height="56" fill="#f8fafc"/>
-  <rect x="12" y="30" width="32" height="10" rx="3" fill="#7f1d1d"/>
-  <rect x="17" y="26" width="22" height="6" rx="2" fill="#b91c1c"/>
+  <rect x="12" y="32" width="32" height="12" fill="#7f1d1d"/>
+  <rect x="18" y="27" width="20" height="7" fill="#7f1d1d"/>
+  <rect x="10" y="38" width="6" height="6" fill="#7f1d1d"/>
+  <rect x="42" y="36" width="8" height="6" fill="#7f1d1d"/>
+  <rect x="20" y="30" width="16" height="6" fill="#b91c1c"/>
+  <rect x="26" y="38" width="10" height="4" fill="#b91c1c"/>
+  <rect x="34" y="25" width="4" height="4" fill="#b91c1c"/>
 </svg>

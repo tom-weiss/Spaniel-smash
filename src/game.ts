@@ -1024,7 +1024,7 @@ export class PixelRenderer {
       else if (entity.type === "rock") {
         if ((entity.crashAnimationMs ?? 0) > 0) drawCrashPulse(this.ctx, entity.x, entity.y, entity.crashAnimationMs ?? 0, "#ffa500");
         drawRock(this.ctx, entity.x, entity.y);
-      } else if (entity.type === "skier") drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#f1fa8c");
+      } else if (entity.type === "skier") drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#ff6b6b");
       else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y);
       else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
       else drawAndy(this.ctx, entity.x, entity.y);
@@ -1114,26 +1114,81 @@ export class PixelRenderer {
 }
 
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#2d6a4f"; ctx.fillRect(x + 3, y, 14, 18); ctx.fillRect(x, y + 8, 20, 12); ctx.fillStyle = "#7f5539"; ctx.fillRect(x + 8, y + 20, 4, 10); }
-function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#6c757d"; ctx.fillRect(x + 2, y + 4, 16, 10); ctx.fillStyle = "#adb5bd"; ctx.fillRect(x + 5, y + 2, 10, 4); }
-function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(x + 1, y + 8, 20, 7); ctx.fillStyle = "#b91c1c"; ctx.fillRect(x + 4, y + 5, 14, 4); }
-function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#f4a261"; ctx.fillRect(x, y, 20, 14); ctx.fillRect(x + 14, y - 3, 8, 8); ctx.fillStyle = "#2a9d8f"; ctx.fillRect(x + 18, y - 1, 2, 4); }
+function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#6b7280";
+  ctx.fillRect(x + 1, y + 7, 18, 11);
+  ctx.fillRect(x + 3, y + 4, 14, 4);
+  ctx.fillStyle = "#9ca3af";
+  ctx.fillRect(x + 5, y + 5, 8, 2);
+  ctx.fillRect(x + 12, y + 8, 4, 2);
+  ctx.fillStyle = "#4b5563";
+  ctx.fillRect(x + 10, y + 10, 2, 6);
+  ctx.fillRect(x + 8, y + 13, 6, 1);
+}
+function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#7f1d1d";
+  ctx.fillRect(x + 2, y + 11, 16, 6);
+  ctx.fillRect(x + 5, y + 9, 10, 3);
+  ctx.fillRect(x + 1, y + 14, 3, 3);
+  ctx.fillRect(x + 16, y + 13, 4, 3);
+  ctx.fillStyle = "#b91c1c";
+  ctx.fillRect(x + 6, y + 10, 8, 3);
+  ctx.fillRect(x + 9, y + 14, 5, 2);
+  ctx.fillRect(x + 13, y + 8, 2, 2);
+}
+function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#8b5e3c";
+  ctx.fillRect(x + 3, y + 9, 12, 7);
+  ctx.fillRect(x + 14, y + 10, 4, 5);
+  ctx.fillRect(x + 15, y + 7, 5, 5);
+  ctx.fillRect(x + 19, y + 9, 3, 2);
+  ctx.fillRect(x + 1, y + 8, 3, 2);
+  ctx.fillStyle = "#c58f63";
+  ctx.fillRect(x + 5, y + 10, 7, 2);
+  ctx.fillRect(x + 16, y + 9, 3, 2);
+  ctx.fillRect(x + 20, y + 10, 2, 1);
+  ctx.fillStyle = "#6b3f2a";
+  ctx.fillRect(x + 15, y + 8, 1, 5);
+  ctx.fillRect(x + 18, y + 8, 1, 5);
+  ctx.fillRect(x + 5, y + 16, 2, 3);
+  ctx.fillRect(x + 10, y + 16, 2, 3);
+  ctx.fillRect(x + 15, y + 15, 2, 4);
+  ctx.fillStyle = "#2a9d8f";
+  ctx.fillRect(x + 13, y + 11, 2, 2);
+  ctx.fillStyle = "#111827";
+  ctx.fillRect(x + 18, y + 9, 1, 1);
+  ctx.fillRect(x + 21, y + 10, 1, 1);
+}
 function drawPuddlePatch(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#1d4ed8";
-  ctx.fillRect(x + 1, y + 12, 20, 8);
-  ctx.fillStyle = "#60a5fa";
-  ctx.fillRect(x + 3, y + 10, 8, 3);
-  ctx.fillRect(x + 13, y + 11, 6, 3);
-  ctx.fillStyle = "#bfdbfe";
-  ctx.fillRect(x + 8, y + 12, 3, 1);
+  ctx.fillStyle = "#1e40af";
+  ctx.fillRect(x + 1, y + 13, 20, 6);
+  ctx.fillRect(x + 3, y + 11, 16, 3);
+  ctx.fillRect(x + 5, y + 10, 6, 1);
+  ctx.fillRect(x + 12, y + 10, 5, 1);
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(x + 4, y + 12, 6, 3);
+  ctx.fillRect(x + 12, y + 12, 6, 3);
+  ctx.fillRect(x + 8, y + 15, 7, 2);
+  ctx.fillStyle = "#93c5fd";
+  ctx.fillRect(x + 6, y + 12, 3, 1);
+  ctx.fillRect(x + 14, y + 13, 3, 1);
+  ctx.fillRect(x + 9, y + 14, 4, 1);
 }
 function drawIcePatch(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#93c5fd";
-  ctx.fillRect(x + 1, y + 10, 20, 10);
+  ctx.fillStyle = "#bfdbfe";
+  ctx.fillRect(x + 2, y + 11, 18, 8);
+  ctx.fillRect(x + 4, y + 9, 4, 2);
+  ctx.fillRect(x + 9, y + 9, 3, 2);
+  ctx.fillRect(x + 14, y + 9, 4, 2);
+  ctx.fillRect(x + 1, y + 18, 3, 1);
+  ctx.fillRect(x + 17, y + 18, 3, 1);
   ctx.fillStyle = "#dbeafe";
-  ctx.fillRect(x + 4, y + 11, 14, 2);
-  ctx.fillRect(x + 5, y + 15, 12, 2);
+  ctx.fillRect(x + 5, y + 12, 10, 2);
+  ctx.fillRect(x + 8, y + 15, 9, 1);
   ctx.fillStyle = "#60a5fa";
-  ctx.fillRect(x + 2, y + 19, 18, 1);
+  ctx.fillRect(x + 3, y + 18, 14, 1);
+  ctx.fillRect(x + 7, y + 10, 1, 8);
+  ctx.fillRect(x + 12, y + 11, 1, 7);
 }
 function drawDroneTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   ctx.fillStyle = "rgba(239, 68, 68, 0.75)";
@@ -1153,12 +1208,14 @@ function drawDroneCrate(ctx: CanvasRenderingContext2D, x: number, y: number): vo
   ctx.fillRect(x + 4, y + 12, 14, 2);
 }
 function drawPooBag(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#166534";
-  ctx.fillRect(x + 5, y + 6, 10, 8);
+  ctx.fillStyle = "#14532d";
+  ctx.fillRect(x + 4, y + 5, 12, 10);
+  ctx.fillRect(x + 8, y + 3, 4, 2);
+  ctx.fillRect(x + 4, y + 7, 2, 6);
   ctx.fillStyle = "#22c55e";
   ctx.fillRect(x + 6, y + 7, 8, 6);
-  ctx.fillStyle = "#14532d";
-  ctx.fillRect(x + 9, y + 4, 2, 2);
+  ctx.fillStyle = "#86efac";
+  ctx.fillRect(x + 11, y + 8, 2, 2);
 }
 function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string, jumpOffset = 0): void {
   const inAir = jumpOffset > 0;
@@ -1167,28 +1224,75 @@ function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColo
   const helmetY = inAir ? y + 2 : y + 3;
   const skiInset = inAir ? 2 : 0;
   const skiWidth = inAir ? 20 : 24;
+  const poleY = inAir ? y + 8 : y + 9;
 
   ctx.fillStyle = bodyColor;
   ctx.fillRect(x + 5, bodyY, 12, bodyHeight);
+  ctx.fillRect(x + 4, bodyY + 4, 2, 5);
   ctx.fillStyle = helmetColor;
   ctx.fillRect(x + 7, helmetY, 8, 8);
+  ctx.fillStyle = "#475569";
+  ctx.fillRect(x + 17, poleY, 1, 12);
+  ctx.fillRect(x + 16, poleY + 11, 3, 1);
   ctx.fillStyle = "#264653";
   ctx.fillRect(x + skiInset, y + 22, skiWidth, 2);
   ctx.fillRect(x + skiInset, y + 25, skiWidth, 2);
 }
 function drawDowndraftZone(ctx: CanvasRenderingContext2D, x: number, y: number, pushDirection: 1 | -1): void {
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(x + 1, y + 1, 20, 2);
+  ctx.fillStyle = "#475569";
+  ctx.fillRect(x + 10, y + 3, 2, 2);
   ctx.fillStyle = "#334155";
-  ctx.fillRect(x + 5, y + 1, 12, 6);
-  ctx.fillRect(x + 2, y + 3, 18, 2);
+  ctx.fillRect(x + 6, y + 5, 11, 6);
+  ctx.fillRect(x + 17, y + 7, 4, 2);
   ctx.fillStyle = "#94a3b8";
-  ctx.fillRect(x + 8, y + 2, 6, 2);
-  const gustX = pushDirection === 1 ? x + 16 : x + 2;
-  ctx.fillStyle = "rgba(56, 189, 248, 0.7)";
-  ctx.fillRect(gustX, y + 8, 2, 5);
-  ctx.fillRect(gustX + (pushDirection === 1 ? 2 : -2), y + 12, 2, 6);
-  ctx.fillRect(gustX + (pushDirection === 1 ? 4 : -4), y + 16, 2, 6);
+  ctx.fillRect(x + 13, y + 6, 3, 3);
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(x + 21, y + 6, 1, 4);
+  ctx.fillRect(x + 20, y + 7, 3, 1);
+  ctx.fillStyle = "#475569";
+  ctx.fillRect(x + 7, y + 12, 10, 1);
+  ctx.fillRect(x + 8, y + 13, 1, 1);
+  ctx.fillRect(x + 15, y + 13, 1, 1);
+
+  const gustBaseX = pushDirection === 1 ? x + 16 : x + 4;
+  ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
+  ctx.fillRect(gustBaseX, y + 14, 2, 4);
+  ctx.fillRect(gustBaseX + 2 * pushDirection, y + 17, 2, 5);
+  ctx.fillRect(gustBaseX + 4 * pushDirection, y + 20, 2, 3);
+  const arrowX = gustBaseX + 6 * pushDirection;
+  ctx.fillRect(arrowX, y + 21, 1, 1);
+  ctx.fillRect(arrowX + pushDirection, y + 20, 1, 3);
+  ctx.fillStyle = "rgba(125, 211, 252, 0.85)";
+  ctx.fillRect(gustBaseX + pushDirection, y + 15, 1, 1);
+  ctx.fillRect(gustBaseX + 3 * pushDirection, y + 18, 1, 1);
+  ctx.fillRect(gustBaseX + 5 * pushDirection, y + 21, 1, 1);
 }
-function drawAndy(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 1, y + 16, 22, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 18, y + 15, 3, 3); ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); }
+function drawAndy(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#7c2d12";
+  ctx.fillRect(x + 1, y + 17, 22, 2);
+  ctx.fillStyle = "#92400e";
+  ctx.fillRect(x + 1, y + 19, 18, 1);
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(x + 19, y + 16, 4, 4);
+  ctx.fillRect(x + 22, y + 17, 1, 2);
+
+  ctx.fillStyle = "#111827";
+  ctx.fillRect(x + 8, y + 7, 8, 9);
+  ctx.fillRect(x + 6, y + 12, 12, 4);
+  ctx.fillRect(x + 9, y + 3, 6, 4);
+  ctx.fillRect(x + 7, y + 6, 10, 2);
+
+  ctx.fillStyle = "#86efac";
+  ctx.fillRect(x + 10, y + 8, 4, 3);
+  ctx.fillStyle = "#ef4444";
+  ctx.fillRect(x + 11, y + 9, 1, 1);
+  ctx.fillRect(x + 13, y + 9, 1, 1);
+  ctx.fillStyle = "#374151";
+  ctx.fillRect(x + 9, y + 5, 6, 1);
+  ctx.fillRect(x + 9, y + 13, 6, 2);
+}
 function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
 function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
 

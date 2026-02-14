@@ -3,6 +3,7 @@
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
+Sprite silhouettes were refreshed in `v1.0.11` for faster on-slope readability; gameplay mechanics are unchanged.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -10,7 +11,7 @@
 | ![rock](docs/images/obstacles/rock.svg) | `rock` | `standard`, `rare`, `super-rare`, `mythic` | Moves vertically down slope. No lane switching. | Loses 1 life and triggers crash freeze unless jump-clear applies. | Can be cleared while jump is active. | Uses tighter collision bounds than its sprite extents. |
 | ![skier](docs/images/obstacles/skier.svg) | `skier` | `standard`, `rare`, `mythic` | Moving obstacle with random lane-change attempts + cooldown. | Loses 1 life and triggers crash freeze unless jump-clear applies. | Can clear if jump is active and `jumpRule` is `low` or `high`. | Standard moving hazard behavior. |
 | ![spaniel](docs/images/obstacles/spaniel.svg) | `spaniel` | `standard`, `rare`, `mythic` | Moving obstacle with random lane-change attempts + cooldown. | Gives `+100`, smash effects, and spawns `bloodstain` (no life loss). | N/A for score collision path. | Smashed count advances the current level toward the Andy boss trigger (`10-15` spaniels per level). |
-| ![andy](docs/images/obstacles/andy.svg) | `andy` | `boss encounter` | Flies in from top, hovers for ~`20s`, tracks lanes while airborne, then exits toward the bottom if not defeated. | Direct contact removes a life (unless invulnerable). Jumping into Andy defeats the boss and grants `+1800`. | Boss-defeat requires jump collision at overlap timing. | Flying Andy does not convert from obstacle-vs-obstacle collisions and throws `poo-bag` projectiles during hover. |
+| ![andy](docs/images/obstacles/andy.svg) | `andy` | `boss encounter` | Flies in from top, hovers for ~`20s`, tracks lanes while airborne, then exits toward the bottom if not defeated. | Direct contact removes a life (unless invulnerable). Jumping into Andy defeats the boss and grants `+1800`. | Boss-defeat requires jump collision at overlap timing. | Rendered as a black witch on a broomstick; gameplay behavior is unchanged. Flying Andy does not convert from obstacle-vs-obstacle collisions and throws `poo-bag` projectiles during hover. |
 | ![poo bag](docs/images/obstacles/poo-bag.svg) | `poo-bag` | `event-driven` | Spawned by Andy and falls down the slope lane. | On hit: green splat effect + life loss (unless invulnerable). | Not jump-clear specific. | Spawn cadence is controlled by Andy boss throw cooldown. |
 | ![bloodstain](docs/images/obstacles/bloodstain.svg) | `bloodstain` | `event-driven` | Drifts vertically down slope. | No life loss; ignored by collision damage checks. | N/A | Spawned from spaniel smash/collision remains and is inert for obstacle-vs-obstacle crash transforms. |
 | ![puddle patch](docs/images/obstacles/puddle-patch.svg) | `puddle-patch` | `rare` | Static patch obstacle (no lane switching). | Applies slowdown effect for `900ms`; no life loss from patch contact. | Not jump-clear relevant. | Patch persists after contact; repeated patch hits stack slow intensity/duration (with caps). |

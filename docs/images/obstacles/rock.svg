@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" role="img" aria-label="rock obstacle">
   <rect width="56" height="56" fill="#f8fafc"/>
-  <rect x="12" y="28" width="32" height="16" rx="3" fill="#6c757d"/>
-  <rect x="18" y="22" width="20" height="8" rx="2" fill="#adb5bd"/>
+  <rect x="10" y="30" width="36" height="18" fill="#6b7280"/>
+  <rect x="14" y="23" width="28" height="8" fill="#6b7280"/>
+  <rect x="18" y="25" width="16" height="4" fill="#9ca3af"/>
+  <rect x="34" y="31" width="8" height="4" fill="#9ca3af"/>
+  <rect x="28" y="34" width="4" height="10" fill="#4b5563"/>
+  <rect x="24" y="39" width="12" height="2" fill="#4b5563"/>
 </svg>
