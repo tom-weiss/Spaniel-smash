@@ -196,8 +196,7 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     ]
   });
 
-  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Score 200')));
-  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Final Score 200')));
+    assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Final Score 200')));
 
   renderer.render({
     lives: 2,
@@ -228,7 +227,6 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     entities: [],
     effects: []
   });
-  assert.ok(calls.some((entry) => entry[0] === 'fillText' && String(entry[1]).includes('Level 1')));
 });
 
 

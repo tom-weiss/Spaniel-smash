@@ -463,9 +463,6 @@ export class PixelRenderer {
         }
         this.ctx.fillStyle = "#1a1a1a";
         this.ctx.font = "16px monospace";
-        this.ctx.fillText(`Score ${snapshot.score}`, 14, 24);
-        this.ctx.fillText(`Lives ${snapshot.lives}`, 14, 44);
-        this.ctx.fillText(`Level ${snapshot.speedLevel}`, 14, 64);
         if (snapshot.isCrashActive && !snapshot.isGameOver) {
             this.ctx.fillStyle = "rgba(12, 18, 31, 0.9)";
             this.ctx.fillRect(this.width / 2 - 120, 78, 240, 56);

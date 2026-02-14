@@ -16,8 +16,24 @@ class SkiMusic {
   private nextNoteTime = 0;
   private scheduler: number | null = null;
   private lcgState = 1;
+  private muted = false;
+
+  public setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (muted) {
+      this.stopBackground();
+      return;
+    }
+
+    if (this.audioCtx?.state === "suspended") {
+      void this.audioCtx.resume();
+    }
+  }
 
   public start(): void {
+    if (this.muted) {
+      return;
+    }
     if (!window.AudioContext) {
       return;
     }
@@ -39,7 +55,7 @@ class SkiMusic {
     }
   }
 
-  public stop(): void {
+  public stopBackground(): void {
     if (this.scheduler !== null) {
       window.clearInterval(this.scheduler);
       this.scheduler = null;
@@ -58,7 +74,7 @@ class SkiMusic {
   }
 
   public bark(): void {
-    if (!window.AudioContext) {
+    if (!window.AudioContext || this.muted) {
       return;
     }
 
@@ -143,6 +159,10 @@ const splashTitle = document.getElementById("splash-title");
 const splashCopy = document.getElementById("splash-copy");
 const splashButton = document.getElementById("splash-start");
 const splashImage = document.getElementById("splash-image") as HTMLImageElement | null;
+const statusScore = document.getElementById("status-score");
+const statusLives = document.getElementById("status-lives");
+const statusLevel = document.getElementById("status-level");
+const muteToggle = document.getElementById("splash-mute-toggle") as HTMLInputElement | null;
 const isTouchMode = window.matchMedia("(pointer: coarse)").matches;
 
 if (isTouchMode && instructionText) {
@@ -151,6 +171,18 @@ if (isTouchMode && instructionText) {
 
 let isPlaying = false;
 let gameOverHandled = false;
+
+const STORAGE_MUTE_KEY = "spaniel-smash-muted";
+const initialMuted = window.localStorage.getItem(STORAGE_MUTE_KEY) === "true";
+music.setMuted(initialMuted);
+if (muteToggle) {
+  muteToggle.checked = initialMuted;
+  muteToggle.addEventListener("change", () => {
+    const muted = muteToggle.checked;
+    music.setMuted(muted);
+    window.localStorage.setItem(STORAGE_MUTE_KEY, String(muted));
+  });
+}
 
 function showSplash(mode: "start" | "game-over"): void {
   if (!splashScreen || !splashTitle || !splashCopy || !splashButton || !splashImage) {
@@ -262,6 +294,16 @@ function frame(now: number): void {
   const snapshot = game.snapshot();
   renderer.render(snapshot);
 
+  if (statusScore) {
+    statusScore.textContent = `Score ${snapshot.score}`;
+  }
+  if (statusLives) {
+    statusLives.textContent = `Lives ${snapshot.lives}`;
+  }
+  if (statusLevel) {
+    statusLevel.textContent = `Level ${snapshot.speedLevel}`;
+  }
+
   if (leftControl) {
     leftControl.toggleAttribute("hidden", !isPlaying || snapshot.isGameOver);
   }
@@ -272,8 +314,8 @@ function frame(now: number): void {
   if (snapshot.isGameOver && !gameOverHandled) {
     gameOverHandled = true;
     isPlaying = false;
-    music.stop();
     music.bark();
+    music.stopBackground();
     showSplash("game-over");
   }
 
