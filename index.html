@@ -114,6 +114,7 @@
         display: none;
         gap: 10px;
         margin-top: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .control {
         flex: 1;
@@ -138,7 +139,7 @@
       }
       @media (pointer: coarse) {
         .controls {
-          display: flex;
+          display: grid;
         }
       }
     </style>
@@ -154,7 +155,7 @@
         <div class="splash-panel">
           <img id="splash-image" alt="Pixel art spaniel" />
           <h1 id="splash-title">SPANIEL SMASH</h1>
-          <p id="splash-copy">Arrow keys or tap controls to move. Smash spaniels, dodge trees, rocks, skiers, and Andy.</p>
+          <p id="splash-copy">Arrow keys or tap controls to move and jump. Smash spaniels, dodge trees, rocks, skiers, and Andy.</p>
           <label class="mute-toggle" for="splash-mute-toggle">
             <input id="splash-mute-toggle" type="checkbox" />
             Mute sound
@@ -170,6 +171,7 @@
         <button id="control-right" class="control" aria-label="Move right">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8.6 19.4a1 1 0 0 1 0-1.4L13.59 13H4a1 1 0 1 1 0-2h9.59L8.6 6.01A1 1 0 1 1 10.01 4.6l6.7 6.69a1 1 0 0 1 0 1.42l-6.7 6.69a1 1 0 0 1-1.41 0Z"/></svg>
         </button>
+        <button id="control-jump" class="control" aria-label="Jump">JUMP</button>
       </div>
     </div>
     <script type="module" src="./dist/main.js"></script>

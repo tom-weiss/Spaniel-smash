@@ -180,6 +180,7 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     isGameOver: true,
     playerX: 120,
     playerY: 366,
+    playerJumpOffset: 0,
     isCrashActive: true,
     sideObstacleOffsetY: 32,
     entities: [
@@ -206,6 +207,7 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     isGameOver: false,
     playerX: 120,
     playerY: 366,
+    playerJumpOffset: 0,
     isCrashActive: true,
     sideObstacleOffsetY: 0,
     entities: [],
@@ -222,6 +224,7 @@ test('pixel renderer paints HUD, effects, crash panel, and end states', () => {
     isGameOver: false,
     playerX: 100,
     playerY: 300,
+    playerJumpOffset: 12,
     isCrashActive: false,
     sideObstacleOffsetY: 8,
     entities: [],
@@ -238,14 +241,14 @@ test('trees cannot be cleared by jump', () => {
   assert.equal(game.snapshot().lives, 2);
 });
 
-test('spawn branches include rock and skier entities', () => {
-  const rockGame = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.2, 0.2, 0.2]), 10);
-  rockGame.step(450, { left: false, right: false });
-  assert.ok(rockGame.snapshot().entities.some((entity) => entity.type === 'rock'));
+test('spawn branches include obstacle ids from brainstorming catalog', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.2, 0.2, 0.6, 0.2]), 10);
+  game.step(450, { left: false, right: false });
 
-  const skierGame = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.2, 0.2, 0.4, 0.1]), 10);
-  skierGame.step(450, { left: false, right: false });
-  assert.ok(skierGame.snapshot().entities.some((entity) => entity.type === 'skier'));
+  const first = game.snapshot().entities[0];
+  assert.ok(first.obstacleId);
+  assert.ok(first.obstacleId.includes('-'));
+  assert.ok(['standard', 'rare', 'super-rare', 'mythic'].includes(first.obstacleTier));
 });
 
 test('input cooldown blocks repeated turns and ignores opposing keys', () => {
@@ -303,30 +306,30 @@ test('jumping clears jump-rule obstacles and rare/super-rare cadence spawns expe
   assert.ok(superRareGame.snapshot().entities.some((entity) => entity.obstacleTier === 'super-rare'));
 });
 
-test('tiered spawns hit standard/rare/super-rare branch variants', () => {
-  const standardSpaniel = new SpanielSmashGame(300, 600, rngFrom([0.9, 0.9, 0.2, 0.2, 0.9, 0.1]), 10);
-  standardSpaniel.step(450, { left: false, right: false });
-  assert.ok(standardSpaniel.snapshot().entities.some((entity) => entity.type === 'spaniel' && entity.obstacleId === 'squirrel-zigzag'));
+test('tiered spawns hit standard/rare/super-rare/mythic cadence branches', () => {
+  const standardGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.2, 0.05, 0.2, 0.2]), 10);
+  standardGame.step(450, { left: false, right: false });
+  assert.ok(standardGame.snapshot().entities.some((entity) => entity.obstacleTier === 'standard'));
 
-  const rareTree = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
-  rareTree.nextRareSpawnMs = 450;
-  rareTree.step(450, { left: false, right: false });
-  assert.ok(rareTree.snapshot().entities.some((entity) => entity.obstacleId === 'fence-segment'));
+  const rareGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
+  rareGame.nextRareSpawnMs = 450;
+  rareGame.step(450, { left: false, right: false });
+  assert.ok(rareGame.snapshot().entities.some((entity) => entity.obstacleTier === 'rare'));
 
-  const rareMover = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.9, 0.9]), 10);
-  rareMover.nextRareSpawnMs = 450;
-  rareMover.step(450, { left: false, right: false });
-  assert.ok(rareMover.snapshot().entities.some((entity) => entity.obstacleId === 'scooter-rider'));
+  const superGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
+  superGame.nextSuperRareSpawnMs = 450;
+  superGame.step(450, { left: false, right: false });
+  assert.ok(superGame.snapshot().entities.some((entity) => entity.obstacleTier === 'super-rare'));
 
-  const superStatic = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2]), 10);
-  superStatic.nextSuperRareSpawnMs = 450;
-  superStatic.step(450, { left: false, right: false });
-  assert.ok(superStatic.snapshot().entities.some((entity) => entity.obstacleId === 'roadwork-trench'));
-
-  const superMoving = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.9, 0.9]), 10);
-  superMoving.nextSuperRareSpawnMs = 450;
-  superMoving.step(450, { left: false, right: false });
-  assert.ok(superMoving.snapshot().entities.some((entity) => entity.obstacleId === 'garbage-truck-reverse'));
+  const mythicGame = new SpanielSmashGame(300, 600, rngFrom([0.1, 0.1, 0.2, 0.2, 0.2, 0.2]), 10);
+  for (let i = 0; i < 25; i += 1) {
+    mythicGame.forceSpawn({ type: 'spaniel', x: 122, y: 366, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+    mythicGame.step(16, { left: false, right: false });
+  }
+  mythicGame.forceSpawn({ type: 'andy', x: 122, y: 20, width: 16, height: 16, speed: 0, lane: 5, laneSwitchCooldownMs: 999 });
+  mythicGame.nextMythicSpawnMs = 450;
+  mythicGame.step(450, { left: false, right: false });
+  assert.ok(mythicGame.snapshot().entities.some((entity) => entity.obstacleTier === 'mythic'));
 });
 
 

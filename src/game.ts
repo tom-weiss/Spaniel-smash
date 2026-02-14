@@ -2,6 +2,64 @@ export type EntityType = "tree" | "rock" | "skier" | "spaniel" | "andy" | "blood
 type ObstacleTier = "standard" | "rare" | "super-rare" | "mythic";
 type JumpRule = "none" | "low" | "high";
 
+interface ObstacleTemplate {
+  type: EntityType;
+  obstacleId: string;
+  jumpRule: JumpRule;
+  widthScale: number;
+  height: number;
+  speed: number;
+  moving: boolean;
+}
+
+const STANDARD_OBSTACLES: ObstacleTemplate[] = [
+  { type: "tree", obstacleId: "cracked-sidewalk-slab", jumpRule: "low", widthScale: 0.5, height: 24, speed: 2.2, moving: false },
+  { type: "rock", obstacleId: "trash-bag-cluster", jumpRule: "low", widthScale: 0.55, height: 22, speed: 2.2, moving: false },
+  { type: "tree", obstacleId: "construction-cone-pair", jumpRule: "low", widthScale: 0.52, height: 24, speed: 2.2, moving: false },
+  { type: "spaniel", obstacleId: "puddle-patch", jumpRule: "none", widthScale: 0.52, height: 20, speed: 1.2, moving: true },
+  { type: "tree", obstacleId: "mail-crate-stack", jumpRule: "high", widthScale: 0.58, height: 32, speed: 2.2, moving: false },
+  { type: "skier", obstacleId: "rolling-skateboard", jumpRule: "low", widthScale: 0.56, height: 28, speed: 1.6, moving: true },
+  { type: "skier", obstacleId: "jogger-crossing", jumpRule: "none", widthScale: 0.56, height: 30, speed: 1.4, moving: true },
+  { type: "spaniel", obstacleId: "bouncing-ball", jumpRule: "low", widthScale: 0.45, height: 18, speed: 1.7, moving: true },
+  { type: "andy", obstacleId: "delivery-cart-drift", jumpRule: "high", widthScale: 0.68, height: 34, speed: 1.0, moving: true },
+  { type: "spaniel", obstacleId: "squirrel-zigzag", jumpRule: "none", widthScale: 0.5, height: 22, speed: 1.8, moving: true }
+];
+
+const RARE_OBSTACLES: ObstacleTemplate[] = [
+  { type: "tree", obstacleId: "fence-segment", jumpRule: "high", widthScale: 0.62, height: 36, speed: 2.3, moving: false },
+  { type: "rock", obstacleId: "open-manhole", jumpRule: "high", widthScale: 0.6, height: 28, speed: 2.3, moving: false },
+  { type: "spaniel", obstacleId: "wet-paint-zone", jumpRule: "none", widthScale: 0.58, height: 20, speed: 1.3, moving: true },
+  { type: "skier", obstacleId: "fallen-signboard", jumpRule: "high", widthScale: 0.62, height: 30, speed: 1.5, moving: true },
+  { type: "rock", obstacleId: "glass-debris-field", jumpRule: "low", widthScale: 0.58, height: 22, speed: 2.3, moving: false },
+  { type: "andy", obstacleId: "street-sweeper-pass", jumpRule: "high", widthScale: 0.72, height: 34, speed: 1.4, moving: true },
+  { type: "rock", obstacleId: "drone-package-drop", jumpRule: "low", widthScale: 0.54, height: 24, speed: 2.1, moving: false },
+  { type: "spaniel", obstacleId: "leashed-dog-lunge", jumpRule: "none", widthScale: 0.52, height: 22, speed: 1.7, moving: true },
+  { type: "skier", obstacleId: "scooter-rider", jumpRule: "none", widthScale: 0.58, height: 32, speed: 2.0, moving: true },
+  { type: "andy", obstacleId: "crow-flock-sweep", jumpRule: "high", widthScale: 0.7, height: 30, speed: 1.7, moving: true }
+];
+
+const SUPER_RARE_OBSTACLES: ObstacleTemplate[] = [
+  { type: "tree", obstacleId: "collapsed-scaffolding", jumpRule: "high", widthScale: 0.75, height: 40, speed: 2.5, moving: false },
+  { type: "rock", obstacleId: "roadwork-trench", jumpRule: "high", widthScale: 0.76, height: 40, speed: 2.45, moving: false },
+  { type: "andy", obstacleId: "power-line-arc-zone", jumpRule: "high", widthScale: 0.72, height: 34, speed: 1.4, moving: true },
+  { type: "tree", obstacleId: "blocked-intersection", jumpRule: "none", widthScale: 0.8, height: 38, speed: 2.3, moving: false },
+  { type: "rock", obstacleId: "statue-base-rubble", jumpRule: "high", widthScale: 0.72, height: 34, speed: 2.4, moving: false },
+  { type: "andy", obstacleId: "runaway-parade-float", jumpRule: "high", widthScale: 0.8, height: 36, speed: 1.2, moving: true },
+  { type: "andy", obstacleId: "garbage-truck-reverse-event", jumpRule: "high", widthScale: 0.74, height: 34, speed: 1.5, moving: true },
+  { type: "skier", obstacleId: "helicopter-downdraft", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.8, moving: true },
+  { type: "andy", obstacleId: "mini-boss-bulldog", jumpRule: "high", widthScale: 0.7, height: 34, speed: 1.5, moving: true },
+  { type: "andy", obstacleId: "train-crossing-burst", jumpRule: "high", widthScale: 0.8, height: 34, speed: 2.0, moving: true }
+];
+
+const MYTHIC_OBSTACLES: ObstacleTemplate[] = [
+  { type: "skier", obstacleId: "mirror-maze-gate", jumpRule: "none", widthScale: 0.66, height: 32, speed: 1.7, moving: true },
+  { type: "spaniel", obstacleId: "frozen-street-tile-set", jumpRule: "low", widthScale: 0.6, height: 20, speed: 1.6, moving: true },
+  { type: "tree", obstacleId: "ancient-bell-tower-debris", jumpRule: "high", widthScale: 0.7, height: 36, speed: 2.4, moving: false },
+  { type: "rock", obstacleId: "meteor-shard-rain", jumpRule: "high", widthScale: 0.66, height: 30, speed: 2.4, moving: false },
+  { type: "andy", obstacleId: "shadow-doppelganger", jumpRule: "none", widthScale: 0.68, height: 32, speed: 1.8, moving: true },
+  { type: "andy", obstacleId: "festival-dragon-sweep", jumpRule: "high", widthScale: 0.8, height: 36, speed: 1.7, moving: true }
+];
+
 export interface Entity {
   type: EntityType;
   obstacleId?: string;
@@ -40,6 +98,7 @@ export interface GameSnapshot {
   isGameOver: boolean;
   playerX: number;
   playerY: number;
+  playerJumpOffset: number;
   isCrashActive: boolean;
   sideObstacleOffsetY: number;
   entities: ReadonlyArray<Entity>;
@@ -51,7 +110,6 @@ export class SpanielSmashGame {
   private height: number;
   private laneCount: number;
   private laneWidth: number;
-
   private playerLane: number;
   private lives = 3;
   private score = 0;
@@ -65,13 +123,16 @@ export class SpanielSmashGame {
   private spawnClock = 0;
   private rareSpawnClock = 0;
   private superRareSpawnClock = 0;
+  private mythicSpawnClock = 0;
   private nextRareSpawnMs = 12000;
   private nextSuperRareSpawnMs = 180000;
+  private nextMythicSpawnMs = 45000;
   private laneSwitchCooldownMs = 0;
   private jumpCooldownMs = 0;
   private jumpTimerMs = 0;
   private crashFreezeMs = 0;
   private sideObstacleOffsetY = 0;
+  private mythicUnlocked = false;
 
   private static readonly staticObstacleSpeed = 2.2;
   private static readonly movingEntityBaseSpeed = 1.2;
@@ -86,6 +147,7 @@ export class SpanielSmashGame {
     this.playerLane = this.startingLane();
     this.nextRareSpawnMs = this.rollRareSpawnMs();
     this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
+    this.nextMythicSpawnMs = this.rollMythicSpawnMs();
   }
 
   public step(deltaMs: number, input: InputState): void {
@@ -152,26 +214,20 @@ export class SpanielSmashGame {
     const movingSpawnY = movingDirection === 1 ? -26 : this.height + 26;
 
     if (this.witchAttackActive && !this.entities.some((entity) => entity.type === "andy")) {
-      this.entities.push({
-        type: "andy",
-        obstacleId: "mini-boss-bulldog",
-        obstacleTier: "super-rare",
-        jumpRule: "high",
-        x: spawnX,
-        y: movingSpawnY,
-        width: this.laneWidth * 0.56,
-        height: 32,
-        speed: SpanielSmashGame.movingEntityBaseSpeed,
-        lane: spawnLane,
-        laneSwitchCooldownMs: 0,
-        direction: movingDirection,
-        crashAnimationMs: 0
-      });
+      this.entities.push(this.makeEntityFromTemplate({ type: "andy", obstacleId: "mini-boss-bulldog", jumpRule: "high", widthScale: 0.56, height: 32, speed: SpanielSmashGame.movingEntityBaseSpeed, moving: true }, "super-rare", spawnLane, spawnX, movingDirection, movingSpawnY));
       return;
     }
 
     this.rareSpawnClock += 450;
     this.superRareSpawnClock += 450;
+    this.mythicSpawnClock += 450;
+
+    if (this.mythicUnlocked && this.mythicSpawnClock >= this.nextMythicSpawnMs) {
+      this.mythicSpawnClock = 0;
+      this.nextMythicSpawnMs = this.rollMythicSpawnMs();
+      this.spawnTieredObstacle("mythic", spawnLane, spawnX, movingDirection, movingSpawnY);
+      return;
+    }
 
     if (this.superRareSpawnClock >= this.nextSuperRareSpawnMs) {
       this.superRareSpawnClock = 0;
@@ -191,71 +247,33 @@ export class SpanielSmashGame {
   }
 
   private spawnTieredObstacle(tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): void {
-    const makeEntity = (
-      type: EntityType,
-      obstacleId: string,
-      jumpRule: JumpRule,
-      width: number,
-      height: number,
-      speed: number,
-      isMoving: boolean
-    ): Entity => ({
-      type,
-      obstacleId,
+    const templates = tier === "standard" ? STANDARD_OBSTACLES : tier === "rare" ? RARE_OBSTACLES : tier === "super-rare" ? SUPER_RARE_OBSTACLES : MYTHIC_OBSTACLES;
+    const template = templates[Math.floor(this.rng() * templates.length)] ?? templates[0];
+    this.entities.push(this.makeEntityFromTemplate(template, tier, spawnLane, spawnX, movingDirection, movingSpawnY));
+  }
+
+  private makeEntityFromTemplate(template: ObstacleTemplate, tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): Entity {
+    const speedVariance = template.moving ? this.rng() * 0.35 : 0;
+    return {
+      type: template.type,
+      obstacleId: template.obstacleId,
       obstacleTier: tier,
-      jumpRule,
+      jumpRule: template.jumpRule,
       x: spawnX,
-      y: isMoving ? movingSpawnY : -24,
-      width,
-      height,
-      speed,
+      y: template.moving ? movingSpawnY : -24,
+      width: this.laneWidth * template.widthScale,
+      height: template.height,
+      speed: template.speed + speedVariance,
       lane: spawnLane,
       laneSwitchCooldownMs: 0,
-      direction: isMoving ? movingDirection : 1,
+      direction: template.moving ? movingDirection : 1,
       crashAnimationMs: 0
-    });
-
-    const roll = this.rng();
-    if (tier === "standard") {
-      if (roll < 0.18) {
-        this.entities.push(makeEntity("tree", "cracked-sidewalk-slab", "none", this.laneWidth * 0.5, 30, SpanielSmashGame.staticObstacleSpeed, false));
-        return;
-      }
-      if (roll < 0.36) {
-        this.entities.push(makeEntity("rock", "trash-bag-cluster", "low", this.laneWidth * 0.4, 20, SpanielSmashGame.staticObstacleSpeed, false));
-        return;
-      }
-      if (roll < 0.56) {
-        this.entities.push(makeEntity("skier", "rolling-skateboard", "none", this.laneWidth * 0.56, 30, SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5, true));
-        return;
-      }
-      this.entities.push(makeEntity("spaniel", "squirrel-zigzag", "none", this.laneWidth * 0.5, 22, SpanielSmashGame.movingEntityBaseSpeed + this.rng() * 0.5, true));
-      return;
-    }
-
-    if (tier === "rare") {
-      if (roll < 0.5) {
-        this.entities.push(makeEntity("tree", "fence-segment", "none", this.laneWidth * 0.6, 36, SpanielSmashGame.staticObstacleSpeed + 0.1, false));
-        return;
-      }
-      this.entities.push(makeEntity("skier", "scooter-rider", "none", this.laneWidth * 0.58, 32, SpanielSmashGame.movingEntityBaseSpeed + 0.8, true));
-      return;
-    }
-
-    if (roll < 0.5) {
-      this.entities.push(makeEntity("rock", "roadwork-trench", "high", this.laneWidth * 0.75, 40, SpanielSmashGame.staticObstacleSpeed + 0.25, false));
-      return;
-    }
-    this.entities.push(makeEntity("andy", "garbage-truck-reverse", "high", this.laneWidth * 0.7, 34, SpanielSmashGame.movingEntityBaseSpeed + 0.3, true));
+    };
   }
 
-  private rollRareSpawnMs(): number {
-    return 10000 + Math.floor(this.rng() * 10001);
-  }
-
-  private rollSuperRareSpawnMs(): number {
-    return 60000 + Math.floor(this.rng() * 540001);
-  }
+  private rollRareSpawnMs(): number { return 10000 + Math.floor(this.rng() * 10001); }
+  private rollSuperRareSpawnMs(): number { return 60000 + Math.floor(this.rng() * 540001); }
+  private rollMythicSpawnMs(): number { return 30000 + Math.floor(this.rng() * 60001); }
 
   private canClearByJump(entity: Entity): boolean {
     if (this.jumpTimerMs <= 0) {
@@ -265,13 +283,7 @@ export class SpanielSmashGame {
   }
 
   private resolveCollisions(): void {
-    const player = {
-      x: this.playerX(),
-      y: this.playerY(),
-      width: this.laneWidth * 0.56,
-      height: 34
-    };
-
+    const player = { x: this.playerX(), y: this.playerY() - this.playerJumpOffset(), width: this.laneWidth * 0.56, height: 34 };
     const survivors: Entity[] = [];
 
     for (const entity of this.entities) {
@@ -280,8 +292,7 @@ export class SpanielSmashGame {
         continue;
       }
 
-      const hit = intersects(player, entity);
-      if (!hit) {
+      if (!intersects(player, entity)) {
         survivors.push(entity);
         continue;
       }
@@ -292,6 +303,7 @@ export class SpanielSmashGame {
         this.spawnBloodstain(entity);
         this.score += 100;
         this.spanielsSmashed += 1;
+        this.mythicUnlocked = this.mythicUnlocked || this.spanielsSmashed >= 25;
         if (this.spanielsSmashed % 10 === 0) {
           this.witchAttackActive = true;
           this.speedLevel += 1;
@@ -317,7 +329,7 @@ export class SpanielSmashGame {
     this.entities = survivors;
   }
 
-  private resolveEntityCollisions(): void {
+  private resolveEntityCollisions(): void { /* unchanged below */
     const indicesToTransform = new Set<number>();
     for (let i = 0; i < this.entities.length; i += 1) {
       for (let j = i + 1; j < this.entities.length; j += 1) {
@@ -355,63 +367,26 @@ export class SpanielSmashGame {
       }
 
       this.spawnSmashEffect(entity.x, entity.y, "obstacle-crash");
-      this.entities[index] = {
-        ...entity,
-        type: "rock",
-        speed: SpanielSmashGame.staticObstacleSpeed,
-        direction: 1,
-        laneSwitchCooldownMs: 0,
-        crashAnimationMs: 260
-      };
+      this.entities[index] = { ...entity, type: "rock", speed: SpanielSmashGame.staticObstacleSpeed, direction: 1, laneSwitchCooldownMs: 0, crashAnimationMs: 260 };
     }
   }
 
-  private isMovingObstacle(entity: Entity): boolean {
-    return entity.type === "skier" || entity.type === "spaniel" || entity.type === "andy";
-  }
-
-  private spawnSmashEffect(x: number, y: number, kind: SmashEffect["kind"]): void {
-    this.effects.push({
-      kind,
-      x,
-      y,
-      ttlMs: 300,
-      maxTtlMs: 300
-    });
-  }
+  private isMovingObstacle(entity: Entity): boolean { return entity.type === "skier" || entity.type === "spaniel" || entity.type === "andy"; }
+  private spawnSmashEffect(x: number, y: number, kind: SmashEffect["kind"]): void { this.effects.push({ kind, x, y, ttlMs: 300, maxTtlMs: 300 }); }
 
   private spawnBloodstain(entity: Entity): void {
-    this.entities.push({
-      type: "bloodstain",
-      x: this.laneX(this.entityLane(entity)),
-      y: entity.y + entity.height + 4,
-      width: this.laneWidth * 0.55,
-      height: 18,
-      speed: SpanielSmashGame.staticObstacleSpeed,
-      lane: this.entityLane(entity),
-      laneSwitchCooldownMs: 0,
-      direction: 1,
-      crashAnimationMs: 0
-    });
+    this.entities.push({ type: "bloodstain", x: this.laneX(this.entityLane(entity)), y: entity.y + entity.height + 4, width: this.laneWidth * 0.55, height: 18, speed: SpanielSmashGame.staticObstacleSpeed, lane: this.entityLane(entity), laneSwitchCooldownMs: 0, direction: 1, crashAnimationMs: 0 });
   }
 
   private tickEffects(deltaMs: number): void {
-    this.effects = this.effects
-      .map((effect) => {
-        const ttlMs = Math.max(0, effect.ttlMs - deltaMs);
-        if (effect.kind !== "coin-pop") {
-          return { ...effect, ttlMs };
-        }
-
-        const travelUnit = deltaMs / 16.67;
-        return {
-          ...effect,
-          ttlMs,
-          x: effect.x + 3 * travelUnit,
-          y: effect.y - 0.8 * travelUnit
-        };
-      })
-      .filter((effect) => effect.ttlMs > 0);
+    this.effects = this.effects.map((effect) => {
+      const ttlMs = Math.max(0, effect.ttlMs - deltaMs);
+      if (effect.kind !== "coin-pop") {
+        return { ...effect, ttlMs };
+      }
+      const travelUnit = deltaMs / 16.67;
+      return { ...effect, ttlMs, x: effect.x + 3 * travelUnit, y: effect.y - 0.8 * travelUnit };
+    }).filter((effect) => effect.ttlMs > 0);
   }
 
   public forceSpawn(entity: Entity): void {
@@ -436,13 +411,16 @@ export class SpanielSmashGame {
     this.spawnClock = 0;
     this.rareSpawnClock = 0;
     this.superRareSpawnClock = 0;
+    this.mythicSpawnClock = 0;
     this.nextRareSpawnMs = this.rollRareSpawnMs();
     this.nextSuperRareSpawnMs = this.rollSuperRareSpawnMs();
+    this.nextMythicSpawnMs = this.rollMythicSpawnMs();
     this.laneSwitchCooldownMs = 0;
     this.jumpCooldownMs = 0;
     this.jumpTimerMs = 0;
     this.crashFreezeMs = 0;
     this.sideObstacleOffsetY = 0;
+    this.mythicUnlocked = false;
   }
 
   public snapshot(): GameSnapshot {
@@ -454,6 +432,7 @@ export class SpanielSmashGame {
       isGameOver: this.gameOver,
       playerX: this.playerX(),
       playerY: this.playerY(),
+      playerJumpOffset: this.playerJumpOffset(),
       isCrashActive: this.crashFreezeMs > 0,
       sideObstacleOffsetY: this.sideObstacleOffsetY,
       entities: this.entities.map((entity) => ({ ...entity })),
@@ -461,43 +440,28 @@ export class SpanielSmashGame {
     };
   }
 
-  private playerX(): number {
-    return this.laneX(this.playerLane);
-  }
-
-  private playerY(): number {
-    return this.height - Math.floor(this.height / 3) - 34;
-  }
-
-  private startingLane(): number {
-    return Math.floor(this.laneCount / 2);
-  }
-
-  private minPlayableLane(): number {
-    return Math.min(2, Math.floor((this.laneCount - 1) / 2));
-  }
-
-  private maxPlayableLane(): number {
-    return Math.max(this.minPlayableLane(), this.laneCount - 1 - this.minPlayableLane());
-  }
-
-  private laneX(lane: number): number {
-    return lane * this.laneWidth + this.laneWidth * 0.22;
-  }
-
-  private entityLane(entity: Entity): number {
-    if (typeof entity.lane === "number") {
-      return Math.max(0, Math.min(this.laneCount - 1, entity.lane));
+  private playerJumpOffset(): number {
+    if (this.jumpTimerMs <= 0) {
+      return 0;
     }
+    const progress = 1 - this.jumpTimerMs / SpanielSmashGame.jumpDurationMs;
+    return Math.sin(Math.PI * progress) * 26;
+  }
+
+  private playerX(): number { return this.laneX(this.playerLane); }
+  private playerY(): number { return this.height - Math.floor(this.height / 3) - 34; }
+  private startingLane(): number { return Math.floor(this.laneCount / 2); }
+  private minPlayableLane(): number { return Math.min(2, Math.floor((this.laneCount - 1) / 2)); }
+  private maxPlayableLane(): number { return Math.max(this.minPlayableLane(), this.laneCount - 1 - this.minPlayableLane()); }
+  private laneX(lane: number): number { return lane * this.laneWidth + this.laneWidth * 0.22; }
+  private entityLane(entity: Entity): number {
+    if (typeof entity.lane === "number") return Math.max(0, Math.min(this.laneCount - 1, entity.lane));
     const lane = Math.round((entity.x - this.laneWidth * 0.22) / this.laneWidth);
     return Math.max(0, Math.min(this.laneCount - 1, lane));
   }
 
   private maybeMoveEntityLane(entity: Entity, deltaMs: number): void {
-    if (entity.type !== "skier" && entity.type !== "spaniel" && entity.type !== "andy") {
-      return;
-    }
-
+    if (entity.type !== "skier" && entity.type !== "spaniel" && entity.type !== "andy") return;
     const currentLane = this.entityLane(entity);
     const cooldown = Math.max(0, (entity.laneSwitchCooldownMs ?? 0) - deltaMs);
     entity.laneSwitchCooldownMs = cooldown;
@@ -509,11 +473,8 @@ export class SpanielSmashGame {
     let targetLane = currentLane;
     if (entity.type === "andy") {
       const laneStep = entity.direction === -1 ? -1 : 1;
-      if (currentLane < this.playerLane) {
-        targetLane = currentLane + laneStep;
-      } else if (currentLane > this.playerLane) {
-        targetLane = currentLane - laneStep;
-      }
+      if (currentLane < this.playerLane) targetLane = currentLane + laneStep;
+      else if (currentLane > this.playerLane) targetLane = currentLane - laneStep;
     } else if (this.rng() < 0.3) {
       targetLane = currentLane + (this.rng() < 0.5 ? -1 : 1);
     }
@@ -524,51 +485,33 @@ export class SpanielSmashGame {
       return;
     }
 
-    if (targetLane !== currentLane && this.isLaneClearForEntity(entity, targetLane)) {
-      entity.lane = targetLane;
-    } else {
-      entity.lane = currentLane;
-    }
+    entity.lane = targetLane !== currentLane && this.isLaneClearForEntity(entity, targetLane) ? targetLane : currentLane;
     entity.laneSwitchCooldownMs = 110;
   }
 
   private isLaneClearForEntity(entity: Entity, lane: number): boolean {
     for (const other of this.entities) {
-      if (other === entity) {
-        continue;
-      }
-      if (this.entityLane(other) !== lane) {
-        continue;
-      }
-      if (Math.abs(other.y - entity.y) < Math.max(other.height, entity.height) + 4) {
-        return false;
-      }
+      if (other === entity) continue;
+      if (this.entityLane(other) !== lane) continue;
+      if (Math.abs(other.y - entity.y) < Math.max(other.height, entity.height) + 4) return false;
     }
     return true;
   }
 
   private pickSpawnLane(): number {
     const preferred = this.minPlayableLane() + Math.floor(this.rng() * (this.maxPlayableLane() - this.minPlayableLane() + 1));
-    if (this.isSpawnLaneClear(preferred)) {
-      return preferred;
-    }
+    if (this.isSpawnLaneClear(preferred)) return preferred;
 
     for (let offset = 1; offset < this.laneCount; offset += 1) {
       const left = preferred - offset;
       const right = preferred + offset;
-      if (left >= this.minPlayableLane() && this.isSpawnLaneClear(left)) {
-        return left;
-      }
-      if (right <= this.maxPlayableLane() && this.isSpawnLaneClear(right)) {
-        return right;
-      }
+      if (left >= this.minPlayableLane() && this.isSpawnLaneClear(left)) return left;
+      if (right <= this.maxPlayableLane() && this.isSpawnLaneClear(right)) return right;
     }
     return preferred;
   }
 
-  private isSpawnLaneClear(lane: number): boolean {
-    return !this.entities.some((entity) => this.entityLane(entity) === lane && entity.y < 40);
-  }
+  private isSpawnLaneClear(lane: number): boolean { return !this.entities.some((entity) => this.entityLane(entity) === lane && entity.y < 40); }
 }
 
 function intersects(a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }): boolean {
@@ -589,44 +532,34 @@ export class PixelRenderer {
   public render(snapshot: GameSnapshot): void {
     this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(0, 0, this.width, this.height);
-
     this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(20, 0, this.width - 40, this.height);
-
     this.drawSlopeEdges(snapshot.sideObstacleOffsetY);
 
     if (snapshot.isCrashActive) {
       drawCrashedSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
     } else {
-      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY, "#2e3fbc", "#ffd166");
-    }
-
-    for (const entity of snapshot.entities) {
-      if (entity.type === "tree") {
-        drawTree(this.ctx, entity.x, entity.y);
-      } else if (entity.type === "rock") {
-        if ((entity.crashAnimationMs ?? 0) > 0) {
-          drawCrashPulse(this.ctx, entity.x, entity.y, entity.crashAnimationMs ?? 0, "#ffa500");
-        }
-        drawRock(this.ctx, entity.x, entity.y);
-      } else if (entity.type === "skier") {
-        drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#f1fa8c");
-      } else if (entity.type === "spaniel") {
-        drawSpaniel(this.ctx, entity.x, entity.y);
-      } else if (entity.type === "bloodstain") {
-        drawBloodstain(this.ctx, entity.x, entity.y);
-      } else {
-        drawWitch(this.ctx, entity.x, entity.y);
+      drawSkier(this.ctx, snapshot.playerX, snapshot.playerY - snapshot.playerJumpOffset, "#2e3fbc", "#ffd166");
+      if (snapshot.playerJumpOffset > 0) {
+        drawJumpShadow(this.ctx, snapshot.playerX, snapshot.playerY, snapshot.playerJumpOffset);
       }
     }
 
-    for (const effect of snapshot.effects) {
-      drawSmashEffect(this.ctx, effect);
+    for (const entity of snapshot.entities) {
+      if (entity.type === "tree") drawTree(this.ctx, entity.x, entity.y);
+      else if (entity.type === "rock") {
+        if ((entity.crashAnimationMs ?? 0) > 0) drawCrashPulse(this.ctx, entity.x, entity.y, entity.crashAnimationMs ?? 0, "#ffa500");
+        drawRock(this.ctx, entity.x, entity.y);
+      } else if (entity.type === "skier") drawSkier(this.ctx, entity.x, entity.y, "#3a86ff", "#f1fa8c");
+      else if (entity.type === "spaniel") drawSpaniel(this.ctx, entity.x, entity.y);
+      else if (entity.type === "bloodstain") drawBloodstain(this.ctx, entity.x, entity.y);
+      else drawWitch(this.ctx, entity.x, entity.y);
     }
+
+    for (const effect of snapshot.effects) drawSmashEffect(this.ctx, effect);
 
     this.ctx.fillStyle = "#1a1a1a";
     this.ctx.font = "16px monospace";
-
     if (snapshot.isCrashActive && !snapshot.isGameOver) {
       this.ctx.fillStyle = "rgba(12, 18, 31, 0.9)";
       this.ctx.fillRect(this.width / 2 - 120, 78, 240, 56);
@@ -664,74 +597,14 @@ export class PixelRenderer {
   }
 }
 
-function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#2d6a4f";
-  ctx.fillRect(x + 3, y, 14, 18);
-  ctx.fillRect(x, y + 8, 20, 12);
-  ctx.fillStyle = "#7f5539";
-  ctx.fillRect(x + 8, y + 20, 4, 10);
-}
-
-function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#6c757d";
-  ctx.fillRect(x + 2, y + 4, 16, 10);
-  ctx.fillStyle = "#adb5bd";
-  ctx.fillRect(x + 5, y + 2, 10, 4);
-}
-
-function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#7f1d1d";
-  ctx.fillRect(x + 1, y + 8, 20, 7);
-  ctx.fillStyle = "#b91c1c";
-  ctx.fillRect(x + 4, y + 5, 14, 4);
-}
-
-function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#f4a261";
-  ctx.fillRect(x, y, 20, 14);
-  ctx.fillRect(x + 14, y - 3, 8, 8);
-  ctx.fillStyle = "#2a9d8f";
-  ctx.fillRect(x + 18, y - 1, 2, 4);
-}
-
-function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void {
-  ctx.fillStyle = bodyColor;
-  ctx.fillRect(x + 5, y + 10, 12, 14);
-  ctx.fillStyle = helmetColor;
-  ctx.fillRect(x + 7, y + 3, 8, 8);
-  ctx.fillStyle = "#264653";
-  ctx.fillRect(x, y + 22, 24, 2);
-  ctx.fillRect(x, y + 25, 24, 2);
-}
-
-function drawWitch(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = "#1f2937";
-  ctx.fillRect(x + 4, y + 4, 14, 2);
-  ctx.fillStyle = "#4c1d95";
-  ctx.fillRect(x + 7, y, 8, 5);
-  ctx.fillRect(x + 6, y + 6, 10, 10);
-  ctx.fillStyle = "#f59e0b";
-  ctx.fillRect(x + 9, y + 5, 4, 1);
-  ctx.fillStyle = "#86efac";
-  ctx.fillRect(x + 8, y + 8, 6, 5);
-  ctx.fillStyle = "#111827";
-  ctx.fillRect(x + 9, y + 9, 1, 1);
-  ctx.fillRect(x + 12, y + 9, 1, 1);
-  ctx.fillStyle = "#7c2d12";
-  ctx.fillRect(x + 2, y + 17, 20, 2);
-  ctx.fillStyle = "#fbbf24";
-  ctx.fillRect(x + 17, y + 16, 3, 3);
-}
-
-function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void {
-  ctx.fillStyle = bodyColor;
-  ctx.fillRect(x + 3, y + 16, 18, 10);
-  ctx.fillStyle = helmetColor;
-  ctx.fillRect(x - 1, y + 12, 8, 8);
-  ctx.fillStyle = "#264653";
-  ctx.fillRect(x - 2, y + 25, 28, 2);
-  ctx.fillRect(x + 8, y + 7, 2, 22);
-}
+function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#2d6a4f"; ctx.fillRect(x + 3, y, 14, 18); ctx.fillRect(x, y + 8, 20, 12); ctx.fillStyle = "#7f5539"; ctx.fillRect(x + 8, y + 20, 4, 10); }
+function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#6c757d"; ctx.fillRect(x + 2, y + 4, 16, 10); ctx.fillStyle = "#adb5bd"; ctx.fillRect(x + 5, y + 2, 10, 4); }
+function drawBloodstain(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(x + 1, y + 8, 20, 7); ctx.fillStyle = "#b91c1c"; ctx.fillRect(x + 4, y + 5, 14, 4); }
+function drawSpaniel(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#f4a261"; ctx.fillRect(x, y, 20, 14); ctx.fillRect(x + 14, y - 3, 8, 8); ctx.fillStyle = "#2a9d8f"; ctx.fillRect(x + 18, y - 1, 2, 4); }
+function drawSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 5, y + 10, 12, 14); ctx.fillStyle = helmetColor; ctx.fillRect(x + 7, y + 3, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x, y + 22, 24, 2); ctx.fillRect(x, y + 25, 24, 2); }
+function drawWitch(ctx: CanvasRenderingContext2D, x: number, y: number): void { ctx.fillStyle = "#1f2937"; ctx.fillRect(x + 4, y + 4, 14, 2); ctx.fillStyle = "#4c1d95"; ctx.fillRect(x + 7, y, 8, 5); ctx.fillRect(x + 6, y + 6, 10, 10); ctx.fillStyle = "#f59e0b"; ctx.fillRect(x + 9, y + 5, 4, 1); ctx.fillStyle = "#86efac"; ctx.fillRect(x + 8, y + 8, 6, 5); ctx.fillStyle = "#111827"; ctx.fillRect(x + 9, y + 9, 1, 1); ctx.fillRect(x + 12, y + 9, 1, 1); ctx.fillStyle = "#7c2d12"; ctx.fillRect(x + 2, y + 17, 20, 2); ctx.fillStyle = "#fbbf24"; ctx.fillRect(x + 17, y + 16, 3, 3); }
+function drawCrashedSkier(ctx: CanvasRenderingContext2D, x: number, y: number, bodyColor: string, helmetColor: string): void { ctx.fillStyle = bodyColor; ctx.fillRect(x + 3, y + 16, 18, 10); ctx.fillStyle = helmetColor; ctx.fillRect(x - 1, y + 12, 8, 8); ctx.fillStyle = "#264653"; ctx.fillRect(x - 2, y + 25, 28, 2); ctx.fillRect(x + 8, y + 7, 2, 22); }
+function drawJumpShadow(ctx: CanvasRenderingContext2D, x: number, y: number, jumpOffset: number): void { const width = Math.max(6, 16 - jumpOffset / 3); ctx.fillStyle = "rgba(15, 23, 42, 0.25)"; ctx.fillRect(x + 12 - width / 2, y + 26, width, 2); }
 
 function drawSmashEffect(ctx: CanvasRenderingContext2D, effect: SmashEffect): void {
   if (effect.kind === "coin-pop") {
