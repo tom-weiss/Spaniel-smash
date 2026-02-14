@@ -446,7 +446,7 @@ test('pixel renderer draws force field around player while immortal', () => {
     effects: []
   });
 
-  assert.ok(onCase.calls.some((entry) => entry[0] === 96 && entry[1] === 294 && entry[2] === 32 && entry[3] === 1));
+  assert.ok(onCase.calls.some((entry) => entry[0] === 100 && entry[1] === 302 && entry[2] === 24 && entry[3] === 1));
 
   const offCase = makeCtx();
   const offRenderer = new PixelRenderer(offCase.ctx, 300, 600);
@@ -466,7 +466,7 @@ test('pixel renderer draws force field around player while immortal', () => {
     entities: [],
     effects: []
   });
-  assert.equal(offCase.calls.some((entry) => entry[0] === 96 && entry[1] === 294 && entry[2] === 32 && entry[3] === 1), false);
+  assert.equal(offCase.calls.some((entry) => entry[0] === 100 && entry[1] === 302 && entry[2] === 24 && entry[3] === 1), false);
 });
 
 test('pixel renderer draws angled downhill skis and visible poles for skier sprite', () => {

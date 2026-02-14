@@ -1790,10 +1790,11 @@ function drawImmortalForceField(ctx: CanvasRenderingContext2D, x: number, y: num
   if (!flashOn) {
     return;
   }
-  const fieldX = x - 6;
-  const fieldY = y - 6;
-  const fieldWidth = 36;
-  const fieldHeight = 40;
+  // Align to the slim skier sprite bounds (including poles/skis) with even padding.
+  const fieldX = x - 2;
+  const fieldY = y + 2;
+  const fieldWidth = 28;
+  const fieldHeight = 34;
   const pulse = Math.floor(immortalMs / 220) % 2;
   ctx.fillStyle = pulse === 0 ? "rgba(34, 197, 94, 0.14)" : "rgba(74, 222, 128, 0.24)";
   ctx.fillRect(fieldX + 4, fieldY + 4, fieldWidth - 8, fieldHeight - 8);

@@ -3,7 +3,7 @@
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
-`v1.1.21` keeps the level-staggered obstacle sets and latest sprite updates, refreshes splash-screen character icons, and further polishes rendering: crash sprites now follow the current slimmer character style and the invulnerability force field fully encloses the player silhouette.
+`v1.1.22` keeps the level-staggered obstacle sets and latest sprite updates, refreshes splash-screen character icons, and further polishes rendering: crash sprites now follow the current slimmer character style and the invulnerability force field is now centered to the current player sprite footprint.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
