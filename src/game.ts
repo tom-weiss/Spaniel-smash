@@ -7,6 +7,8 @@ export interface Entity {
   width: number;
   height: number;
   speed: number;
+  lane?: number;
+  laneSwitchCooldownMs?: number;
 }
 
 export interface InputState {
@@ -30,7 +32,7 @@ export class SpanielSmashGame {
   private laneCount: number;
   private laneWidth: number;
 
-  private playerLane = 1;
+  private playerLane: number;
   private lives = 3;
   private score = 0;
   private speedLevel = 1;
@@ -42,12 +44,13 @@ export class SpanielSmashGame {
   private spawnClock = 0;
   private laneSwitchCooldownMs = 0;
 
-  constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 3) {
+  constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 10) {
     this.width = width;
     this.height = height;
     this.laneCount = laneCount;
     this.laneWidth = width / laneCount;
     this.rng = rng;
+    this.playerLane = this.startingLane();
   }
 
   public step(deltaMs: number, input: InputState): void {
@@ -64,15 +67,12 @@ export class SpanielSmashGame {
 
     const speedMultiplier = 1 + (this.speedLevel - 1) * 0.2;
     for (const entity of this.entities) {
+      this.maybeMoveEntityLane(entity, deltaMs);
       entity.y += entity.speed * speedMultiplier * (deltaMs / 16.67);
-      if (entity.type === "andy") {
-        if (entity.x < this.playerX()) {
-          entity.x += 0.9;
-        } else if (entity.x > this.playerX()) {
-          entity.x -= 0.9;
-        }
-      }
+      entity.x = this.laneX(this.entityLane(entity));
     }
+
+    this.preventEntityOverlaps();
 
     this.resolveCollisions();
     this.entities = this.entities.filter((entity) => entity.y < this.height + 40);
@@ -95,8 +95,8 @@ export class SpanielSmashGame {
   }
 
   private spawnEntity(): void {
-    const spawnLane = Math.floor(this.rng() * this.laneCount);
-    const spawnX = spawnLane * this.laneWidth + this.laneWidth * 0.22;
+    const spawnLane = this.pickSpawnLane();
+    const spawnX = this.laneX(spawnLane);
 
     if (this.witchAttackActive && !this.entities.some((entity) => entity.type === "andy")) {
       this.entities.push({
@@ -105,7 +105,9 @@ export class SpanielSmashGame {
         y: -26,
         width: this.laneWidth * 0.56,
         height: 32,
-        speed: 2.7
+        speed: 2.4,
+        lane: spawnLane,
+        laneSwitchCooldownMs: 0
       });
       return;
     }
@@ -118,7 +120,9 @@ export class SpanielSmashGame {
         y: -24,
         width: this.laneWidth * 0.5,
         height: 30,
-        speed: 1.9 + this.rng()
+        speed: 2.2,
+        lane: spawnLane,
+        laneSwitchCooldownMs: 0
       });
       return;
     }
@@ -130,7 +134,9 @@ export class SpanielSmashGame {
         y: -20,
         width: this.laneWidth * 0.4,
         height: 20,
-        speed: 2.5 + this.rng() * 0.9
+        speed: 2.2,
+        lane: spawnLane,
+        laneSwitchCooldownMs: 0
       });
       return;
     }
@@ -142,7 +148,9 @@ export class SpanielSmashGame {
         y: -24,
         width: this.laneWidth * 0.56,
         height: 30,
-        speed: 2.1 + this.rng()
+        speed: 2.1 + this.rng(),
+        lane: spawnLane,
+        laneSwitchCooldownMs: 0
       });
       return;
     }
@@ -153,7 +161,9 @@ export class SpanielSmashGame {
       y: -20,
       width: this.laneWidth * 0.5,
       height: 22,
-      speed: 2 + this.rng()
+      speed: 2 + this.rng(),
+      lane: spawnLane,
+      laneSwitchCooldownMs: 0
     });
   }
 
@@ -197,11 +207,14 @@ export class SpanielSmashGame {
   }
 
   public forceSpawn(entity: Entity): void {
+    entity.lane = this.entityLane(entity);
+    entity.x = this.laneX(entity.lane);
+    entity.laneSwitchCooldownMs ??= 0;
     this.entities.push(entity);
   }
 
   public restart(): void {
-    this.playerLane = 1;
+    this.playerLane = this.startingLane();
     this.lives = 3;
     this.score = 0;
     this.speedLevel = 1;
@@ -226,7 +239,116 @@ export class SpanielSmashGame {
   }
 
   private playerX(): number {
-    return this.playerLane * this.laneWidth + this.laneWidth * 0.22;
+    return this.laneX(this.playerLane);
+  }
+
+  private startingLane(): number {
+    return Math.floor(this.laneCount / 2);
+  }
+
+  private laneX(lane: number): number {
+    return lane * this.laneWidth + this.laneWidth * 0.22;
+  }
+
+  private entityLane(entity: Entity): number {
+    if (typeof entity.lane === "number") {
+      return Math.max(0, Math.min(this.laneCount - 1, entity.lane));
+    }
+    const lane = Math.round((entity.x - this.laneWidth * 0.22) / this.laneWidth);
+    return Math.max(0, Math.min(this.laneCount - 1, lane));
+  }
+
+  private maybeMoveEntityLane(entity: Entity, deltaMs: number): void {
+    if (entity.type !== "skier" && entity.type !== "spaniel" && entity.type !== "andy") {
+      return;
+    }
+
+    const currentLane = this.entityLane(entity);
+    const cooldown = Math.max(0, (entity.laneSwitchCooldownMs ?? 0) - deltaMs);
+    entity.laneSwitchCooldownMs = cooldown;
+    if (cooldown > 0) {
+      entity.lane = currentLane;
+      return;
+    }
+
+    let targetLane = currentLane;
+    if (entity.type === "andy") {
+      if (currentLane < this.playerLane) {
+        targetLane = currentLane + 1;
+      } else if (currentLane > this.playerLane) {
+        targetLane = currentLane - 1;
+      }
+    } else if (this.rng() < 0.3) {
+      targetLane = currentLane + (this.rng() < 0.5 ? -1 : 1);
+    }
+
+    if (targetLane < 0 || targetLane >= this.laneCount) {
+      entity.lane = currentLane;
+      entity.laneSwitchCooldownMs = 110;
+      return;
+    }
+
+    if (targetLane !== currentLane && this.isLaneClearForEntity(entity, targetLane)) {
+      entity.lane = targetLane;
+    } else {
+      entity.lane = currentLane;
+    }
+    entity.laneSwitchCooldownMs = 110;
+  }
+
+  private isLaneClearForEntity(entity: Entity, lane: number): boolean {
+    for (const other of this.entities) {
+      if (other === entity) {
+        continue;
+      }
+      if (this.entityLane(other) !== lane) {
+        continue;
+      }
+      if (Math.abs(other.y - entity.y) < Math.max(other.height, entity.height) + 4) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private preventEntityOverlaps(): void {
+    for (let lane = 0; lane < this.laneCount; lane += 1) {
+      const laneEntities = this.entities
+        .filter((entity) => this.entityLane(entity) === lane)
+        .sort((a, b) => b.y - a.y);
+
+      for (let i = 1; i < laneEntities.length; i += 1) {
+        const lower = laneEntities[i - 1];
+        const upper = laneEntities[i];
+        const maxUpperY = lower.y - upper.height - 2;
+        if (upper.y > maxUpperY) {
+          upper.y = maxUpperY;
+        }
+      }
+    }
+  }
+
+  private pickSpawnLane(): number {
+    const preferred = Math.floor(this.rng() * this.laneCount);
+    if (this.isSpawnLaneClear(preferred)) {
+      return preferred;
+    }
+
+    for (let offset = 1; offset < this.laneCount; offset += 1) {
+      const left = preferred - offset;
+      const right = preferred + offset;
+      if (left >= 0 && this.isSpawnLaneClear(left)) {
+        return left;
+      }
+      if (right < this.laneCount && this.isSpawnLaneClear(right)) {
+        return right;
+      }
+    }
+    return preferred;
+  }
+
+  private isSpawnLaneClear(lane: number): boolean {
+    return !this.entities.some((entity) => this.entityLane(entity) === lane && entity.y < 40);
   }
 }
 
@@ -251,14 +373,6 @@ export class PixelRenderer {
 
     this.ctx.fillStyle = "#f3fbff";
     this.ctx.fillRect(20, 0, this.width - 40, this.height);
-
-    this.ctx.strokeStyle = "#c7e8f7";
-    for (let i = 1; i < 3; i += 1) {
-      this.ctx.beginPath();
-      this.ctx.moveTo((this.width / 3) * i, 0);
-      this.ctx.lineTo((this.width / 3) * i, this.height);
-      this.ctx.stroke();
-    }
 
     drawSkier(this.ctx, snapshot.playerX, this.height - 58, "#2e3fbc", "#ffd166");
 
