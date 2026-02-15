@@ -18,6 +18,7 @@ class SkiMusic {
   private lcgState = 1;
   private muted = false;
   private bossMode = false;
+  private celebrationTimers: number[] = [];
 
   public setMuted(muted: boolean): void {
     this.muted = muted;
@@ -86,6 +87,13 @@ class SkiMusic {
     }
   }
 
+  public stopCelebration(): void {
+    for (const timer of this.celebrationTimers) {
+      window.clearTimeout(timer);
+    }
+    this.celebrationTimers = [];
+  }
+
   public resetSequence(): void {
     this.lcgState = this.bossMode ? 17 : 1;
     if (this.audioCtx) {
@@ -151,6 +159,30 @@ class SkiMusic {
       barkNotes.forEach((freq, index) => {
         this.playNote(freq, at + burst * 0.16 + index * 0.042, 0.04, "square", 0.25);
       });
+    }
+  }
+
+  public celebrateVictory(): void {
+    if (!window.AudioContext || this.muted) {
+      return;
+    }
+    this.start();
+    if (!this.master || !this.audioCtx) {
+      return;
+    }
+
+    this.stopCelebration();
+    const now = this.audioCtx.currentTime + 0.02;
+    const motif = [523.25, 659.25, 783.99, 1046.5];
+    motif.forEach((note, index) => {
+      this.playNote(note, now + index * 0.12, 0.24, "triangle", 0.34);
+      this.playNote(note * 1.5, now + index * 0.12 + 0.02, 0.2, "square", 0.2);
+    });
+    for (let burst = 0; burst < 6; burst += 1) {
+      const timer = window.setTimeout(() => {
+        this.howl();
+      }, 260 + burst * 190);
+      this.celebrationTimers.push(timer);
     }
   }
 
@@ -231,7 +263,7 @@ class SkiMusic {
   }
 }
 
-const GAME_VERSION = "v1.1.26";
+const GAME_VERSION = "v1.2.0";
 
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);
@@ -273,7 +305,7 @@ function showSplash(mode: "start" | "game-over", finalScore = 0): void {
   splashScreen.classList.remove("hidden");
   if (mode === "start") {
     splashTitle.textContent = `SPANIEL SMASH ${GAME_VERSION}`;
-    splashCopy.textContent = "Arrow keys or tap controls move left/right. Smash spaniels to score, then defeat Andy when the boss phase starts.";
+    splashCopy.textContent = "Evil Andy has released the spaniel army to take over the ski slopes. Smash the spaniels to clear the slopes. Arrow keys or tap controls move left/right. Smash spaniels to score, then defeat Andy when the boss phase starts.";
     splashButton.textContent = "START";
     return;
   }
@@ -404,6 +436,7 @@ bindTouchControl(jumpControl, "jump");
 splashButton?.addEventListener("click", () => {
   if (game.snapshot().isGameOver) {
     game.restart();
+    music.stopCelebration();
     music.resetSequence();
   }
 
@@ -459,7 +492,20 @@ function frame(now: number): void {
     music.howl();
   }
 
-  if (snapshot.isGameOver && !gameOverHandled) {
+  if (snapshot.isVictory && !gameOverHandled) {
+    gameOverHandled = true;
+    isPlaying = false;
+    music.stopBackground();
+    music.celebrateVictory();
+    if (splashScreen && splashTitle && splashCopy && splashButton) {
+      splashScreen.classList.remove("hidden");
+      splashTitle.textContent = "CONGRATULATIONS";
+      splashCopy.textContent = "You beat Evil Andy. The slopes are clear!";
+      splashButton.textContent = "PLAY AGAIN";
+    }
+  }
+
+  if (snapshot.isGameOver && !snapshot.isVictory && !gameOverHandled) {
     gameOverHandled = true;
     isPlaying = false;
     music.stopBackground();

@@ -131,7 +131,7 @@ test('ski school spawn scales children by level and supports debug override coun
   levelSix.speedLevel = 6;
   levelSix.spawnSkiSchoolDebug();
   const longSchool = levelSix.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
-  assert.equal(longSchool.filter((entity) => entity.type === 'ski-school-child').length, 9);
+  assert.equal(longSchool.filter((entity) => entity.type === 'ski-school-child').length, 12);
 
   const debugOverride = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
   debugOverride.spawnSkiSchoolDebug(4);
@@ -172,6 +172,33 @@ test('andy boss appears after spaniel threshold and jump defeat levels up with b
   assert.equal(afterDefeat.levelSpanielsSmashed, 0);
   assert.ok(afterDefeat.levelUpBannerMs > 0);
   assert.equal(afterDefeat.score, 3000);
+});
+
+
+
+test('defeating level ten boss triggers victory state', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.speedLevel = 10;
+  game.andyBossActive = true;
+  game.forceSpawn({
+    type: 'andy',
+    obstacleId: 'andy-boss',
+    jumpRule: 'high',
+    behaviorState: { kind: 'andyBoss', phase: 'hovering', phaseMs: 2000, throwCooldownMs: 9999 },
+    x: 122,
+    y: 366,
+    width: 28,
+    height: 34,
+    speed: 0,
+    lane: 5,
+    laneSwitchCooldownMs: 0
+  });
+
+  game.step(16, { left: false, right: false, jump: true });
+  const snap = game.snapshot();
+  assert.equal(snap.isVictory, true);
+  assert.equal(snap.isGameOver, true);
+  assert.equal(snap.speedLevel, 10);
 });
 
 test('moving obstacles only convert when colliding with lethal obstacles', () => {
@@ -878,11 +905,13 @@ test('andy boss throws poo bags and level completes when boss exits', () => {
   });
 
   game.step(16, { left: false, right: false });
-  const poo = game.entities.find((entity) => entity.type === 'poo-bag');
-  assert.ok(poo);
-  poo.y = 366;
-  poo.speed = 0;
-  poo.lane = 5;
+  const poo = game.entities.filter((entity) => entity.type === 'poo-bag');
+  assert.ok(poo.length >= 1);
+  for (const bag of poo) {
+    bag.y = 366;
+    bag.speed = 0;
+    bag.lane = 5;
+  }
 
   game.step(16, { left: false, right: false });
   assert.equal(game.snapshot().lives, 2);
@@ -934,7 +963,7 @@ test('level one standard spawns bias toward spaniels and higher levels spawn mor
 
   const lowLevel = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   const highLevel = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
-  highLevel.speedLevel = 5;
+  highLevel.speedLevel = 8;
 
   for (let i = 0; i < 20; i += 1) {
     lowLevel.step(120, { left: false, right: false });
