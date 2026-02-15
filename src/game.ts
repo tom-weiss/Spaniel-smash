@@ -142,6 +142,7 @@ export interface GameSnapshot {
   playerImmortalMs: number;
   isCrashActive: boolean;
   isBossActive: boolean;
+  isVictory?: boolean;
   levelUpBannerMs: number;
   sideObstacleOffsetY: number;
   activeEffects: ActiveEffectsSnapshot;
@@ -176,6 +177,7 @@ export class SpanielSmashGame {
   private levelSpanielsSmashed = 0;
   private gameOver = false;
   private andyBossActive = false;
+  private victory = false;
   private entities: Entity[] = [];
   private effects: SmashEffect[] = [];
   private rng: () => number;
@@ -215,9 +217,9 @@ export class SpanielSmashGame {
   private static readonly andyBossLaneMoveMs = 240;
   private static readonly andyBossThrowMinMs = 820;
   private static readonly andyBossThrowMaxMs = 1500;
-  private static readonly andyBossThrowMinFloorMs = 260;
-  private static readonly andyBossThrowRangeFloorMs = 180;
-  private static readonly andyThrowLevelReductionMs = 70;
+  private static readonly andyBossThrowMinFloorMs = 170;
+  private static readonly andyBossThrowRangeFloorMs = 140;
+  private static readonly andyThrowLevelReductionMs = 110;
   private static readonly andyBossBonusScore = 1800;
   private static readonly entityCullMarginPx = 40;
   private static readonly levelStartImmortalMs = 2600;
@@ -226,11 +228,11 @@ export class SpanielSmashGame {
   private static readonly levelTransitionBoostDurationMs = 3800;
   private static readonly levelTransitionSpawnIntervalMs = 230;
   private static readonly levelTransitionSpawnFloorMs = 150;
-  private static readonly levelOneBaseSpawnIntervalMs = 540;
-  private static readonly spawnIntervalLevelStepMs = 56;
-  private static readonly minSpawnIntervalMs = 150;
+  private static readonly levelOneBaseSpawnIntervalMs = 520;
+  private static readonly spawnIntervalLevelStepMs = 70;
+  private static readonly minSpawnIntervalMs = 90;
   private static readonly levelOneStandardSpanielChance = 0.56;
-  private static readonly levelSpeedStepMultiplier = 0.22;
+  private static readonly levelSpeedStepMultiplier = 0.32;
   private static readonly levelTransitionScrollMultiplier = 1.2;
   private static readonly pooBagSpeed = 2.8;
   private static readonly pooBagWidthScale = 0.34;
@@ -248,7 +250,7 @@ export class SpanielSmashGame {
   private static readonly iceScrollSpeedMultiplier = 1.35;
   private static readonly skiSchoolObstacleId = "ski-school-snake";
   private static readonly skiSchoolBaseChildren = 3;
-  private static readonly skiSchoolMaxChildren = 16;
+  private static readonly skiSchoolMaxChildren = 24;
   private static readonly skiSchoolInstructorWidthScale = 0.56;
   private static readonly skiSchoolChildWidthScale = 0.5;
   private static readonly skiSchoolInstructorHeight = 30;
@@ -257,6 +259,7 @@ export class SpanielSmashGame {
   private static readonly skiSchoolWavePeriodMs = 1080;
   private static readonly skiSchoolWaveOffsetMs = 170;
   private static readonly skiSchoolSpeedVariance = 0.16;
+  private static readonly victoryLevel = 10;
 
   constructor(width: number, height: number, rng: () => number = Math.random, laneCount = 20) {
     this.width = width;
@@ -421,6 +424,14 @@ export class SpanielSmashGame {
     }
 
     this.spawnTieredObstacle("standard", spawnLane, spawnX, movingDirection, movingSpawnY);
+
+    const extraSpawnRoll = this.rng();
+    if (this.speedLevel >= 4 && extraSpawnRoll < Math.min(0.55, (this.speedLevel - 3) * 0.08)) {
+      const bonusLane = this.pickSpawnLane();
+      const bonusDirection = this.rng() < 0.5 ? 1 : -1;
+      const bonusY = bonusDirection === 1 ? -26 : this.height + 26;
+      this.spawnTieredObstacle(this.speedLevel >= 7 && this.rng() < 0.42 ? "rare" : "standard", bonusLane, this.laneX(bonusLane), bonusDirection, bonusY);
+    }
   }
 
   private spawnTieredObstacle(tier: ObstacleTier, spawnLane: number, spawnX: number, movingDirection: 1 | -1, movingSpawnY: number): void {
@@ -513,7 +524,7 @@ export class SpanielSmashGame {
   }
 
   private skiSchoolChildrenForLevel(level = this.speedLevel): number {
-    const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 2;
+    const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 3;
     return Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, scaled));
   }
 
@@ -645,6 +656,13 @@ export class SpanielSmashGame {
     if (defeated) {
       this.score += SpanielSmashGame.andyBossBonusScore;
     }
+    if (this.speedLevel >= SpanielSmashGame.victoryLevel) {
+      this.victory = true;
+      this.gameOver = true;
+      this.levelUpBannerMs = 0;
+      this.levelTransitionBoostMs = 0;
+      return;
+    }
     this.speedLevel += 1;
     this.lives = 3;
     this.crashFreezeMs = 0;
@@ -657,22 +675,30 @@ export class SpanielSmashGame {
   }
 
   private spawnAndyPooBag(andy: Entity): void {
-    const lane = this.playerLane;
-    this.entities.push({
-      id: this.nextEntityId++,
-      type: "poo-bag",
-      obstacleId: "andy-poo-bag",
-      jumpRule: "none",
-      x: this.laneX(lane),
-      y: andy.y + andy.height - 2,
-      width: this.laneWidth * SpanielSmashGame.pooBagWidthScale,
-      height: SpanielSmashGame.pooBagHeight,
-      speed: SpanielSmashGame.pooBagSpeed,
-      lane,
-      laneSwitchCooldownMs: 0,
-      direction: 1,
-      crashAnimationMs: 0
-    });
+    const maxSpread = Math.max(0, Math.min(2, Math.floor((this.speedLevel - 3) / 3)));
+    const lanes = new Set<number>([this.playerLane]);
+    while (lanes.size < 1 + maxSpread) {
+      const delta = this.rng() < 0.5 ? -1 : 1;
+      const lane = Math.max(this.minPlayableLane(), Math.min(this.maxPlayableLane(), this.playerLane + delta * Math.max(1, Math.floor(this.rng() * 3))));
+      lanes.add(lane);
+    }
+    for (const lane of lanes) {
+      this.entities.push({
+        id: this.nextEntityId++,
+        type: "poo-bag",
+        obstacleId: "andy-poo-bag",
+        jumpRule: "none",
+        x: this.laneX(lane),
+        y: andy.y + andy.height - 2,
+        width: this.laneWidth * SpanielSmashGame.pooBagWidthScale,
+        height: SpanielSmashGame.pooBagHeight,
+        speed: SpanielSmashGame.pooBagSpeed,
+        lane,
+        laneSwitchCooldownMs: 0,
+        direction: 1,
+        crashAnimationMs: 0
+      });
+    }
   }
 
   private rollRareSpawnMs(): number { return 10000 + Math.floor(this.rng() * 10001); }
@@ -1124,6 +1150,7 @@ export class SpanielSmashGame {
     this.levelSpanielsSmashed = 0;
     this.gameOver = false;
     this.andyBossActive = false;
+    this.victory = false;
     this.entities = [];
     this.effects = [];
     this.spawnClock = 0;
@@ -1165,6 +1192,7 @@ export class SpanielSmashGame {
       playerImmortalMs: this.playerImmortalMs,
       isCrashActive: this.crashFreezeMs > 0,
       isBossActive: this.andyBossActive,
+      isVictory: this.victory,
       levelUpBannerMs: this.levelUpBannerMs,
       sideObstacleOffsetY: this.sideObstacleOffsetY,
       activeEffects: {
@@ -1371,7 +1399,17 @@ export class PixelRenderer {
       this.ctx.fillText(`LEVEL ${snapshot.speedLevel}!`, this.width / 2 - 66, 158);
     }
 
-    if (snapshot.isGameOver) {
+    if (snapshot.isVictory) {
+      this.drawVictoryFireworks();
+      this.ctx.fillStyle = "rgba(3, 7, 18, 0.58)";
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.ctx.fillStyle = "#fef08a";
+      this.ctx.fillText("CONGRATULATIONS", this.width / 2 - 86, this.height / 2 - 10);
+      this.ctx.fillStyle = "#dcfce7";
+      this.ctx.fillText("You beat Evil Andy", this.width / 2 - 82, this.height / 2 + 14);
+      this.ctx.fillStyle = "#fff";
+      this.ctx.fillText(`Final Score ${snapshot.score}`, this.width / 2 - 78, this.height / 2 + 38);
+    } else if (snapshot.isGameOver) {
       this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
       this.ctx.fillRect(0, 0, this.width, this.height);
       this.ctx.fillStyle = "#fff";
@@ -1388,6 +1426,24 @@ export class PixelRenderer {
         drawTree(this.ctx, placement.x, placement.y);
       } else {
         drawRock(this.ctx, placement.x, placement.y);
+      }
+    }
+  }
+
+
+  private drawVictoryFireworks(): void {
+    const bursts = 8;
+    for (let burst = 0; burst < bursts; burst += 1) {
+      const burstX = 48 + burst * ((this.width - 96) / (bursts - 1));
+      const burstY = 66 + (burst % 3) * 34;
+      const hue = (burst * 47) % 360;
+      for (let spark = 0; spark < 14; spark += 1) {
+        const angle = (Math.PI * 2 * spark) / 14;
+        const radius = 10 + (spark % 4) * 6;
+        const x = burstX + Math.cos(angle) * radius;
+        const y = burstY + Math.sin(angle) * radius;
+        this.ctx.fillStyle = `hsl(${hue + spark * 4} 95% 66%)`;
+        this.ctx.fillRect(Math.round(x), Math.round(y), 3, 3);
       }
     }
   }
