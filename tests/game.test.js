@@ -131,7 +131,8 @@ test('ski school spawn scales children by level and supports debug override coun
   levelSix.speedLevel = 6;
   levelSix.spawnSkiSchoolDebug();
   const longSchool = levelSix.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
-  assert.equal(longSchool.filter((entity) => entity.type === 'ski-school-child').length, 12);
+  assert.equal(longSchool.filter((entity) => entity.type === 'ski-school-child').length, 9);
+  assert.ok(longSchool.every((entity) => entity.behaviorState?.kind !== 'skiSchoolSnake' || entity.behaviorState.laneSpan === 1));
 
   const debugOverride = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
   debugOverride.spawnSkiSchoolDebug(4);
@@ -174,7 +175,33 @@ test('andy boss appears after spaniel threshold and jump defeat levels up with b
   assert.equal(afterDefeat.score, 3000);
 });
 
+test('level six is the final level and boss completion keeps it capped', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.speedLevel = 6;
+  game.levelSpanielsSmashed = game.nextBossSpanielGoal;
+  game.andyBossActive = true;
+  game.forceSpawn({
+    type: 'andy',
+    obstacleId: 'andy-boss',
+    jumpRule: 'high',
+    behaviorState: { kind: 'andyBoss', phase: 'hovering', phaseMs: 4000, throwCooldownMs: 9999 },
+    x: 122,
+    y: 366,
+    width: 28,
+    height: 34,
+    speed: 0,
+    lane: 5,
+    laneSwitchCooldownMs: 0
+  });
 
+  game.step(16, { left: false, right: false, jump: true });
+  const snap = game.snapshot();
+  assert.equal(snap.speedLevel, 6);
+  assert.equal(snap.lives, 3);
+  assert.equal(snap.levelSpanielsSmashed, 0);
+  assert.equal(snap.levelUpBannerMs, 0);
+  assert.equal(snap.nextBossSpanielGoal <= 14, true);
+});
 
 test('defeating level ten boss triggers victory state', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);

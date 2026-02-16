@@ -89,9 +89,9 @@ export class SpanielSmashGame {
     static andyBossLaneMoveMs = 240;
     static andyBossThrowMinMs = 820;
     static andyBossThrowMaxMs = 1500;
-    static andyBossThrowMinFloorMs = 170;
-    static andyBossThrowRangeFloorMs = 140;
-    static andyThrowLevelReductionMs = 110;
+    static andyBossThrowMinFloorMs = 260;
+    static andyBossThrowRangeFloorMs = 180;
+    static andyThrowLevelReductionMs = 60;
     static andyBossBonusScore = 1800;
     static entityCullMarginPx = 40;
     static levelStartImmortalMs = 2600;
@@ -100,12 +100,13 @@ export class SpanielSmashGame {
     static levelTransitionBoostDurationMs = 3800;
     static levelTransitionSpawnIntervalMs = 230;
     static levelTransitionSpawnFloorMs = 150;
-    static levelOneBaseSpawnIntervalMs = 520;
-    static spawnIntervalLevelStepMs = 70;
-    static minSpawnIntervalMs = 90;
+    static levelOneBaseSpawnIntervalMs = 540;
+    static spawnIntervalLevelStepMs = 50;
+    static minSpawnIntervalMs = 160;
     static levelOneStandardSpanielChance = 0.56;
-    static levelSpeedStepMultiplier = 0.32;
+    static levelSpeedStepMultiplier = 0.2;
     static levelTransitionScrollMultiplier = 1.2;
+    static maxSpeedLevel = 6;
     static pooBagSpeed = 2.8;
     static pooBagWidthScale = 0.34;
     static pooBagHeight = 16;
@@ -122,7 +123,7 @@ export class SpanielSmashGame {
     static iceScrollSpeedMultiplier = 1.35;
     static skiSchoolObstacleId = "ski-school-snake";
     static skiSchoolBaseChildren = 3;
-    static skiSchoolMaxChildren = 24;
+    static skiSchoolMaxChildren = 16;
     static skiSchoolInstructorWidthScale = 0.56;
     static skiSchoolChildWidthScale = 0.5;
     static skiSchoolInstructorHeight = 30;
@@ -225,10 +226,12 @@ export class SpanielSmashGame {
         return Math.max(0.35, Math.min(2.5, levelTransition * effectSpeed));
     }
     currentLevelSpeedMultiplier() {
-        return 1 + (this.speedLevel - 1) * SpanielSmashGame.levelSpeedStepMultiplier;
+        const effectiveLevel = Math.min(this.speedLevel, SpanielSmashGame.maxSpeedLevel);
+        return 1 + (effectiveLevel - 1) * SpanielSmashGame.levelSpeedStepMultiplier;
     }
     currentSpawnIntervalMs() {
-        const baselineSpawnInterval = Math.max(SpanielSmashGame.minSpawnIntervalMs, SpanielSmashGame.levelOneBaseSpawnIntervalMs - (this.speedLevel - 1) * SpanielSmashGame.spawnIntervalLevelStepMs);
+        const effectiveLevel = Math.min(this.speedLevel, SpanielSmashGame.maxSpeedLevel);
+        const baselineSpawnInterval = Math.max(SpanielSmashGame.minSpawnIntervalMs, SpanielSmashGame.levelOneBaseSpawnIntervalMs - (effectiveLevel - 1) * SpanielSmashGame.spawnIntervalLevelStepMs);
         if (this.levelTransitionBoostMs > 0) {
             return Math.max(SpanielSmashGame.levelTransitionSpawnFloorMs, Math.min(SpanielSmashGame.levelTransitionSpawnIntervalMs, baselineSpawnInterval - 80));
         }
@@ -359,11 +362,11 @@ export class SpanielSmashGame {
         return undefined;
     }
     skiSchoolChildrenForLevel(level = this.speedLevel) {
-        const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 3;
+        const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 2;
         return Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, scaled));
     }
     skiSchoolLaneSpanForLevel(level = this.speedLevel) {
-        return level >= 6 ? 2 : 1;
+        return level >= 7 ? 2 : 1;
     }
     clampSkiSchoolAnchorLane(lane, laneSpan) {
         const minAnchor = this.minPlayableLane() + laneSpan;
@@ -479,13 +482,16 @@ export class SpanielSmashGame {
             this.levelTransitionBoostMs = 0;
             return;
         }
-        this.speedLevel += 1;
+        const canAdvanceLevel = this.speedLevel < SpanielSmashGame.maxSpeedLevel;
+        if (canAdvanceLevel) {
+            this.speedLevel += 1;
+        }
         this.lives = 3;
         this.crashFreezeMs = 0;
         this.levelSpanielsSmashed = 0;
-        this.nextBossSpanielGoal = 10 + ((this.speedLevel - 1) % 6);
-        this.levelUpBannerMs = SpanielSmashGame.levelUpBannerDurationMs;
-        this.levelTransitionBoostMs = SpanielSmashGame.levelTransitionBoostDurationMs;
+        this.nextBossSpanielGoal = this.bossSpanielGoalForLevel(this.speedLevel);
+        this.levelUpBannerMs = canAdvanceLevel ? SpanielSmashGame.levelUpBannerDurationMs : 0;
+        this.levelTransitionBoostMs = canAdvanceLevel ? SpanielSmashGame.levelTransitionBoostDurationMs : 0;
         this.playerImmortalMs = Math.max(this.playerImmortalMs, SpanielSmashGame.levelStartImmortalMs);
         this.spawnClock = Math.min(this.spawnClock, this.currentSpawnIntervalMs() - 1);
     }
@@ -519,11 +525,19 @@ export class SpanielSmashGame {
     rollSuperRareSpawnMs() { return 60000 + Math.floor(this.rng() * 540001); }
     rollMythicSpawnMs() { return 30000 + Math.floor(this.rng() * 60001); }
     rollAndyThrowCooldownMs() {
-        const reductionMs = (this.speedLevel - 1) * SpanielSmashGame.andyThrowLevelReductionMs;
+        const effectiveLevel = Math.min(this.speedLevel, SpanielSmashGame.maxSpeedLevel);
+        const reductionMs = (effectiveLevel - 1) * SpanielSmashGame.andyThrowLevelReductionMs;
         const minThrowMs = Math.max(SpanielSmashGame.andyBossThrowMinFloorMs, SpanielSmashGame.andyBossThrowMinMs - reductionMs);
         const maxThrowMs = Math.max(minThrowMs + SpanielSmashGame.andyBossThrowRangeFloorMs, SpanielSmashGame.andyBossThrowMaxMs - reductionMs);
         const span = maxThrowMs - minThrowMs;
         return minThrowMs + Math.floor(this.rng() * (span + 1));
+    }
+    bossSpanielGoalForLevel(level) {
+        const clampedLevel = Math.max(1, Math.min(SpanielSmashGame.maxSpeedLevel, Math.floor(level)));
+        if (clampedLevel === 1) {
+            return 12;
+        }
+        return Math.min(14, 10 + ((clampedLevel - 1) % 6));
     }
     maybeCompleteBossFromOffscreenExit(entity) {
         if (!this.andyBossActive || entity.type !== "andy" || entity.behaviorState?.kind !== "andyBoss") {
@@ -926,7 +940,7 @@ export class SpanielSmashGame {
         this.playerImmortalMs = 0;
         this.levelUpBannerMs = 0;
         this.levelTransitionBoostMs = 0;
-        this.nextBossSpanielGoal = 12;
+        this.nextBossSpanielGoal = this.bossSpanielGoalForLevel(this.speedLevel);
         this.nextEntityId = 1;
         this.touchingSurfaceEntityIds = new Set();
     }
