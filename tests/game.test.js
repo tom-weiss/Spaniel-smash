@@ -182,7 +182,7 @@ test('andy boss appears after spaniel threshold and jump defeat levels up with b
   assert.equal(afterDefeat.score, 3000);
 });
 
-test('level six is the final level and boss completion keeps it capped', () => {
+test('boss completion advances levels beyond six toward the level ten finale', () => {
   const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   game.speedLevel = 6;
   game.levelSpanielsSmashed = game.nextBossSpanielGoal;
@@ -203,10 +203,10 @@ test('level six is the final level and boss completion keeps it capped', () => {
 
   game.step(16, { left: false, right: false, jump: true });
   const snap = game.snapshot();
-  assert.equal(snap.speedLevel, 6);
+  assert.equal(snap.speedLevel, 7);
   assert.equal(snap.lives, 5);
   assert.equal(snap.levelSpanielsSmashed, 0);
-  assert.equal(snap.levelUpBannerMs, 0);
+  assert.ok(snap.levelUpBannerMs > 0);
   assert.equal(snap.nextBossSpanielGoal <= 14, true);
 });
 

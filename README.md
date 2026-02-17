@@ -7,7 +7,7 @@ Evil Andy has released the spaniel army to take over the ski slopes. Smash the s
 ## Obstacle Behavior
 
 `obstacleId` is catalog metadata only. Runtime mechanics are keyed by `entity.type` (and `behaviorState` for timed/pulsed behaviors).
-`v1.2.2` keeps lives persistent across boss transitions, awards bonus lives for jump-smashing Andy, makes slalom poles slowdown hazards, and enforces a minimum ski-school snake length.
+`v1.2.5` restores campaign progression through level 10 (final boss clear) while keeping speed/spawn tuning capped at level 6.
 
 | Picture | Obstacle Type | Frequency Category | Movement | Player Collision | Jump Interaction | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -33,15 +33,15 @@ Evil Andy has released the spaniel army to take over the ski slopes. Smash the s
 - Level 1 uses a slower base spawn cadence and biases standard spawns toward `spaniel`, so non-spaniel hazards are less frequent at the start.
 - Obstacle pools are staggered by level: simpler hazards dominate level 1, with `black-spaniel`/`ice-crevasse` starting at level 2 and `naked-skier` joining at level 4.
 - `ski-school-snake` joins rare spawns at level 3; it starts with 3 children and adds 2 children per level after 3 (up to 16), with a hard minimum of 3 children in all spawn paths.
-- Obstacle spawn cadence tightens each level up to level 6 (final level), with a softer level step and a slightly higher spawn floor.
-- Baseline downhill speed also scales up each level with a gentler multiplier, before puddle/ice modifiers are applied.
+- Obstacle spawn cadence tightens through level 6, then stays at level-6 pacing for levels 7-10.
+- Baseline downhill speed scales up through level 6, then stays at level-6 tuning for levels 7-10 before puddle/ice modifiers are applied.
 - Andy boss appears once the level spaniel target is reached (`10-14` range; first level target starts at `12`).
-- If Andy is defeated by jump-smash or leaves the screen, levels advance through level 6; once on level 6, boss completion starts another level-6 cycle.
+- If Andy is defeated by jump-smash or leaves the screen, levels advance to level 10; clearing Andy on level 10 ends the run in victory.
 - Lives no longer refresh at boss completion. Jump-smashing Andy adds `+2` lives, and the life total is uncapped.
 - Boss exit completion is evaluated on post-move position each frame so edge-of-screen exits cannot miss level transition.
-- Andy throws `poo-bag` projectiles faster on later levels via level-scaled throw cooldowns, with slightly reduced per-level acceleration; higher levels can launch multiple bags across nearby lanes.
+- Andy throws `poo-bag` projectiles faster through level 6 via level-scaled throw cooldowns, with slightly reduced per-level acceleration; levels 7-10 keep level-6 throw cadence while still allowing multi-lane throws.
 - Level-up now includes a pulse + sparkle celebration animation behind the banner.
-- After level-up (levels 1-5), spawn pacing speeds up briefly for a faster transition.
+- After level-up (levels 1-9), spawn pacing speeds up briefly for a faster transition.
 - Extra bonus obstacle spawns can trigger from level 4 onward, adding occasional pressure spikes on top of base cadence.
 - Player invulnerability windows:
   - `2.6s` on level-up transitions (levels after level 1),
@@ -62,4 +62,4 @@ Evil Andy has released the spaniel army to take over the ski slopes. Smash the s
 - iOS home-screen support is enabled via Apple mobile web app meta tags and `apple-touch-icon.png`.
 - `sw.js` caches the app shell (`index.html`, compiled scripts, manifest, icons, and splash images) to improve repeat-load and offline behavior.
 
-Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `50ms` per level to about `290ms` at level 6, and uses a faster post-level transition burst on level-ups (`~230ms` early, down to `~210ms` by level 5). `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.
+Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `50ms` per level to about `290ms` at level 6, then holds that baseline through level 10. Post-level transition bursts start around `~230ms` and bottom out near `~150ms` on late-level transitions. `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.

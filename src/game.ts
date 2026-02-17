@@ -234,6 +234,7 @@ export class SpanielSmashGame {
   private static readonly levelOneStandardSpanielChance = 0.56;
   private static readonly levelSpeedStepMultiplier = 0.2;
   private static readonly levelTransitionScrollMultiplier = 1.2;
+  // Speed/spawn tuning caps at level 6; campaign progression continues to victoryLevel.
   private static readonly maxSpeedLevel = 6;
   private static readonly pooBagSpeed = 2.8;
   private static readonly pooBagWidthScale = 0.34;
@@ -668,7 +669,7 @@ export class SpanielSmashGame {
       this.levelTransitionBoostMs = 0;
       return;
     }
-    const canAdvanceLevel = this.speedLevel < SpanielSmashGame.maxSpeedLevel;
+    const canAdvanceLevel = this.speedLevel < SpanielSmashGame.victoryLevel;
     if (canAdvanceLevel) {
       this.speedLevel += 1;
     }

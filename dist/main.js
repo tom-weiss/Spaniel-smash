@@ -225,7 +225,7 @@ class SkiMusic {
         osc.stop(at + duration + 0.03);
     }
 }
-const GAME_VERSION = "v1.2.4";
+const GAME_VERSION = "v1.2.5";
 function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return;

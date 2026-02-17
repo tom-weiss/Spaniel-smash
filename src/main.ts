@@ -263,7 +263,7 @@ class SkiMusic {
   }
 }
 
-const GAME_VERSION = "v1.2.4";
+const GAME_VERSION = "v1.2.5";
 
 function registerServiceWorker(): void {
   if (!("serviceWorker" in navigator)) {
