@@ -143,6 +143,12 @@ test('ski school spawn scales children by level and supports debug override coun
   const overrideAfterStep = debugOverride.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
   assert.equal(overrideAfterStep.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
   assert.equal(overrideAfterStep.filter((entity) => entity.type === 'ski-school-child').length, 4);
+
+  const clampedMinimum = new SpanielSmashGame(300, 600, rngFrom([0.2, 0.3, 0.4]), 10);
+  clampedMinimum.spawnSkiSchoolDebug(1);
+  const minSchool = clampedMinimum.snapshot().entities.filter((entity) => entity.type === 'ski-school-instructor' || entity.type === 'ski-school-child');
+  assert.equal(minSchool.filter((entity) => entity.type === 'ski-school-instructor').length, 1);
+  assert.equal(minSchool.filter((entity) => entity.type === 'ski-school-child').length, 3);
 });
 
 test('andy boss appears after spaniel threshold and jump defeat levels up with bonus', () => {
@@ -170,6 +176,7 @@ test('andy boss appears after spaniel threshold and jump defeat levels up with b
   const afterDefeat = game.snapshot();
   assert.equal(afterDefeat.isBossActive, false);
   assert.equal(afterDefeat.speedLevel, 2);
+  assert.equal(afterDefeat.lives, 5);
   assert.equal(afterDefeat.levelSpanielsSmashed, 0);
   assert.ok(afterDefeat.levelUpBannerMs > 0);
   assert.equal(afterDefeat.score, 3000);
@@ -197,7 +204,7 @@ test('level six is the final level and boss completion keeps it capped', () => {
   game.step(16, { left: false, right: false, jump: true });
   const snap = game.snapshot();
   assert.equal(snap.speedLevel, 6);
-  assert.equal(snap.lives, 3);
+  assert.equal(snap.lives, 5);
   assert.equal(snap.levelSpanielsSmashed, 0);
   assert.equal(snap.levelUpBannerMs, 0);
   assert.equal(snap.nextBossSpanielGoal <= 14, true);
@@ -833,6 +840,17 @@ test('jumping over puddle and ice patches does not apply surface effects', () =>
   assert.equal(iceGame.snapshot().activeEffects.wetPaintSlipMs, 0);
 });
 
+test('slalom poles slow like puddles instead of removing lives', () => {
+  const game = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
+  game.forceSpawn({ type: 'slalom-poles', obstacleId: 'slalom-poles', x: 122, y: 366, width: 24, height: 28, speed: 0, lane: 5 });
+
+  game.step(16, { left: false, right: false });
+  const afterHit = game.snapshot();
+  assert.equal(afterHit.lives, 3);
+  assert.ok(afterHit.activeEffects.puddleSlowMs > 0);
+  assert.ok(afterHit.entities.some((entity) => entity.type === 'slalom-poles'));
+});
+
 test('puddle and ice effects stack when hitting multiple patches', () => {
   const slowGame = new SpanielSmashGame(300, 600, rngFrom([0.2]), 10);
   slowGame.forceSpawn({ type: 'puddle-patch', obstacleId: 'puddle-patch', x: 122, y: 366, width: 24, height: 24, speed: 0, lane: 5 });
@@ -954,7 +972,7 @@ test('andy boss throws poo bags and level completes when boss exits', () => {
   const afterExit = game.snapshot();
   assert.equal(afterExit.isBossActive, false);
   assert.equal(afterExit.speedLevel, 2);
-  assert.equal(afterExit.lives, 3);
+  assert.equal(afterExit.lives, 2);
   assert.ok(afterExit.levelUpBannerMs > 0);
 });
 

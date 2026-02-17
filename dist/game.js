@@ -122,6 +122,7 @@ export class SpanielSmashGame {
     static puddleScrollSpeedMultiplier = 0.72;
     static iceScrollSpeedMultiplier = 1.35;
     static skiSchoolObstacleId = "ski-school-snake";
+    static skiSchoolMinChildren = 3;
     static skiSchoolBaseChildren = 3;
     static skiSchoolMaxChildren = 16;
     static skiSchoolInstructorWidthScale = 0.56;
@@ -363,7 +364,7 @@ export class SpanielSmashGame {
     }
     skiSchoolChildrenForLevel(level = this.speedLevel) {
         const scaled = SpanielSmashGame.skiSchoolBaseChildren + Math.max(0, level - 3) * 2;
-        return Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, scaled));
+        return Math.max(SpanielSmashGame.skiSchoolMinChildren, Math.min(SpanielSmashGame.skiSchoolMaxChildren, scaled));
     }
     skiSchoolLaneSpanForLevel(level = this.speedLevel) {
         return level >= 7 ? 2 : 1;
@@ -385,7 +386,7 @@ export class SpanielSmashGame {
     spawnSkiSchoolSnake(spawnLane, movingDirection, tier, childrenCount, spawnYOverride) {
         const laneSpan = this.skiSchoolLaneSpanForLevel();
         const anchorLane = this.clampSkiSchoolAnchorLane(spawnLane, laneSpan);
-        const childTotal = Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)));
+        const childTotal = Math.max(SpanielSmashGame.skiSchoolMinChildren, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)));
         const baseY = typeof spawnYOverride === "number"
             ? spawnYOverride
             : movingDirection === 1 ? -30 : this.height + 30;
@@ -474,6 +475,7 @@ export class SpanielSmashGame {
         this.andyBossActive = false;
         if (defeated) {
             this.score += SpanielSmashGame.andyBossBonusScore;
+            this.lives += 2;
         }
         if (this.speedLevel >= SpanielSmashGame.victoryLevel) {
             this.victory = true;
@@ -486,7 +488,6 @@ export class SpanielSmashGame {
         if (canAdvanceLevel) {
             this.speedLevel += 1;
         }
-        this.lives = 3;
         this.crashFreezeMs = 0;
         this.levelSpanielsSmashed = 0;
         this.nextBossSpanielGoal = this.bossSpanielGoalForLevel(this.speedLevel);
@@ -689,6 +690,21 @@ export class SpanielSmashGame {
                 survivors.push(entity);
                 continue;
             }
+            if (entity.type === "slalom-poles") {
+                if (this.jumpTimerMs > 0) {
+                    survivors.push(entity);
+                    continue;
+                }
+                const id = entity.id ?? -1;
+                if (id >= 0) {
+                    nextTouchingSurfaceEntityIds.add(id);
+                }
+                if (id < 0 || !this.touchingSurfaceEntityIds.has(id)) {
+                    this.puddleSlowMs = Math.min(SpanielSmashGame.maxPuddleStackMs, this.puddleSlowMs + SpanielSmashGame.puddleSlowDurationMs);
+                }
+                survivors.push(entity);
+                continue;
+            }
             if (entity.type === "drone-package-drop" && entity.behaviorState?.kind === "droneDrop" && entity.behaviorState.phase === "telegraph") {
                 survivors.push(entity);
                 continue;
@@ -864,6 +880,7 @@ export class SpanielSmashGame {
     isLethalForMovingObstacleCollision(entity) {
         if (entity.type === "bloodstain"
             || entity.type === "puddle-patch"
+            || entity.type === "slalom-poles"
             || entity.type === "ice-patch"
             || entity.type === "spaniel"
             || entity.type === "black-spaniel") {
@@ -906,7 +923,7 @@ export class SpanielSmashGame {
         }
         const spawnLane = this.playerLane;
         const childTotal = typeof childrenCount === "number"
-            ? Math.max(1, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)))
+            ? Math.max(SpanielSmashGame.skiSchoolMinChildren, Math.min(SpanielSmashGame.skiSchoolMaxChildren, Math.floor(childrenCount)))
             : this.skiSchoolChildrenForLevel();
         this.spawnSkiSchoolSnake(spawnLane, 1, "rare", childTotal, 92);
     }
