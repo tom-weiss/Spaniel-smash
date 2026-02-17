@@ -263,7 +263,21 @@ class SkiMusic {
   }
 }
 
-const GAME_VERSION = "v1.2.3";
+const GAME_VERSION = "v1.2.4";
+
+function registerServiceWorker(): void {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+      console.error("Service worker registration failed", error);
+    });
+  });
+}
+
+registerServiceWorker();
 
 const game = new SpanielSmashGame(canvas.width, canvas.height);
 const renderer = new PixelRenderer(ctx, canvas.width, canvas.height);

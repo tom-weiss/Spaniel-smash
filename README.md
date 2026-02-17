@@ -54,4 +54,12 @@ Evil Andy has released the spaniel army to take over the ski slopes. Smash the s
 - Touch controls suppress long-press and gesture defaults to reduce accidental viewport zoom on mobile Safari while holding movement/jump buttons.
 - Debug/testing: press `p` within the first `1s` after starting a run to force-spawn a ski-school snake with exactly 4 children.
 
+## Web App Metadata & PWA
+
+- `index.html` includes SEO metadata (`description`) plus Open Graph/Twitter card tags for social previews.
+- Social sharing image is served from `og-image.png` (`1200x630`) and referenced by OG/Twitter metadata.
+- PWA install metadata is defined in `site.webmanifest` with `standalone` display, portrait orientation, and app icons (`192`, `512`, and Apple touch icon).
+- iOS home-screen support is enabled via Apple mobile web app meta tags and `apple-touch-icon.png`.
+- `sw.js` caches the app shell (`index.html`, compiled scripts, manifest, icons, and splash images) to improve repeat-load and offline behavior.
+
 Tier cadence reference: baseline spawn starts at about `540ms` on level 1, tightens by roughly `50ms` per level to about `290ms` at level 6, and uses a faster post-level transition burst on level-ups (`~230ms` early, down to `~210ms` by level 5). `rare` remains about every `10-20s`, `super-rare` about every `60-600s`, and `mythic` about every `30-90s` after mythic unlock.
